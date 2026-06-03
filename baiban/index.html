@@ -2,402 +2,346 @@
 <html lang="zh-CN">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no,viewport-fit=cover">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
 <title>协作白板 - Miro Style</title>
 <style>
 /* ============ Reset & Base ============ */
-*, *::before, *::after { margin: 0; padding: 0; box-sizing: border-box; }
-body {
-  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'PingFang SC', 'Microsoft YaHei', sans-serif;
-  overflow: hidden;
-  height: 100vh;
-  width: 100vw;
-  user-select: none;
-  -webkit-user-select: none;
-  background: #f0f0f0;
+*,*::before,*::after{margin:0;padding:0;box-sizing:border-box}
+html,body{
+  height:100%;width:100%;overflow:hidden;
+  position:fixed; /* prevent mobile pull-to-refresh */
+  touch-action:manipulation;
+  -webkit-overflow-scrolling:none;
+  overscroll-behavior:none;
+}
+body{
+  font-family:-apple-system,BlinkMacSystemFont,'Segoe UI','PingFang SC','Microsoft YaHei',sans-serif;
+  background:#f0f0f0;
+  -webkit-user-select:none;user-select:none;
+  -webkit-tap-highlight-color:transparent;
+  -webkit-touch-callout:none;
 }
 
 /* ============ Toolbar ============ */
-.toolbar {
-  position: fixed; top: 0; left: 0; right: 0; z-index: 1000;
-  height: 48px;
-  background: #1a1a2e;
-  display: flex; align-items: center;
-  padding: 0 16px; gap: 4px;
-  box-shadow: 0 2px 12px rgba(0,0,0,0.3);
+.toolbar{
+  position:fixed;top:0;left:0;right:0;z-index:1000;
+  height:50px;
+  background:#1a1a2e;
+  display:flex;align-items:center;
+  padding:0 8px;gap:2px;
+  box-shadow:0 2px 12px rgba(0,0,0,.3);
 }
-.toolbar-group {
-  display: flex; align-items: center; gap: 2px;
-  padding: 0 6px;
+.toolbar-group{display:flex;align-items:center;gap:2px;padding:0 4px}
+.toolbar-divider{width:1px;height:24px;background:rgba(255,255,255,.15);margin:0 4px}
+.tool-btn{
+  width:38px;height:38px;border:none;background:transparent;
+  border-radius:8px;cursor:pointer;
+  display:flex;align-items:center;justify-content:center;
+  transition:all .15s;color:rgba(255,255,255,.7);
+  -webkit-tap-highlight-color:transparent;
+  flex-shrink:0;
 }
-.toolbar-divider {
-  width: 1px; height: 24px;
-  background: rgba(255,255,255,0.15);
-  margin: 0 4px;
-}
-.tool-btn {
-  width: 36px; height: 36px;
-  border: none; background: transparent;
-  border-radius: 8px; cursor: pointer;
-  display: flex; align-items: center; justify-content: center;
-  transition: all 0.15s ease;
-  color: rgba(255,255,255,0.7);
-  position: relative;
-}
-.tool-btn:hover { background: rgba(255,255,255,0.12); color: #fff; }
-.tool-btn.active { background: rgba(99, 102, 241, 0.6); color: #fff; }
-.tool-btn svg { width: 20px; height: 20px; }
-.tool-btn[data-tooltip]::after {
-  content: attr(data-tooltip);
-  position: absolute; bottom: -28px; left: 50%;
-  transform: translateX(-50%);
-  background: #333; color: #fff;
-  font-size: 11px; padding: 3px 8px;
-  border-radius: 4px; white-space: nowrap;
-  pointer-events: none; opacity: 0;
-  transition: opacity 0.15s;
-  z-index: 1100;
-}
-.tool-btn[data-tooltip]:hover::after { opacity: 1; }
+.tool-btn:active,.tool-btn.active{background:rgba(99,102,241,.6);color:#fff}
+.tool-btn svg{width:20px;height:20px;pointer-events:none}
+.tool-label{color:rgba(255,255,255,.5);font-size:10px;padding:0 4px;white-space:nowrap;display:none}
 
-/* Color swatches in toolbar */
-.color-swatch {
-  width: 24px; height: 24px;
-  border-radius: 50%; border: 2px solid transparent;
-  cursor: pointer; transition: all 0.15s;
-  flex-shrink: 0;
+/* Color swatches */
+.color-swatch{
+  width:26px;height:26px;border-radius:50%;
+  border:2px solid transparent;cursor:pointer;
+  transition:all .15s;flex-shrink:0;
 }
-.color-swatch:hover { transform: scale(1.2); }
-.color-swatch.active { border-color: #fff; box-shadow: 0 0 0 2px rgba(255,255,255,0.5); }
+.color-swatch:active{transform:scale(1.15)}
+.color-swatch.active{border-color:#fff;box-shadow:0 0 0 2px rgba(255,255,255,.5)}
 
-.thickness-btn {
-  width: 28px; height: 28px;
-  border: 2px solid transparent;
-  border-radius: 50%;
-  background: transparent;
-  cursor: pointer;
-  display: flex; align-items: center; justify-content: center;
-  transition: all 0.15s;
+.thickness-btn{
+  width:30px;height:30px;border:2px solid transparent;
+  border-radius:50%;background:transparent;cursor:pointer;
+  display:flex;align-items:center;justify-content:center;
+  transition:all .15s;flex-shrink:0;
 }
-.thickness-btn:hover { background: rgba(255,255,255,0.12); }
-.thickness-btn.active { border-color: rgba(255,255,255,0.8); background: rgba(255,255,255,0.15); }
-.thickness-dot {
-  border-radius: 50%; background: #fff;
-}
+.thickness-btn.active{border-color:rgba(255,255,255,.8);background:rgba(255,255,255,.15)}
+.thickness-dot{border-radius:50%;background:#fff}
 
-.tool-label {
-  color: rgba(255,255,255,0.5);
-  font-size: 11px; padding: 0 6px;
-  white-space: nowrap;
+/* Collapsible settings panel */
+.tool-settings-panel{
+  position:fixed;top:50px;left:0;right:0;
+  background:#2a2a3e;z-index:999;
+  display:none;padding:8px 12px;
+  flex-wrap:wrap;align-items:center;gap:6px;
+  box-shadow:0 4px 12px rgba(0,0,0,.3);
 }
+.tool-settings-panel.show{display:flex}
 
 /* ============ Canvas ============ */
-.canvas-container {
-  position: fixed; top: 48px; left: 0; right: 0; bottom: 0;
-  background-color: #ffffff;
+.canvas-container{
+  position:fixed;top:50px;left:0;right:0;bottom:0;
+  background-color:#fff;
   background-image:
-    linear-gradient(#e5e5e5 1px, transparent 1px),
-    linear-gradient(90deg, #e5e5e5 1px, transparent 1px);
-  background-size: 20px 20px;
-  cursor: grab;
-  overflow: hidden;
+    linear-gradient(#e5e5e5 1px,transparent 1px),
+    linear-gradient(90deg,#e5e5e5 1px,transparent 1px);
+  background-size:24px 24px;
+  overflow:hidden;
 }
-.canvas-container:active { cursor: grabbing; }
-.canvas-container.pen-tool { cursor: crosshair; }
-.canvas-container.note-tool { cursor: cell; }
-.canvas-container.connect-tool { cursor: crosshair; }
-
-.transform-layer {
-  position: absolute; top: 0; left: 0;
-  transform-origin: 0 0;
-  width: 0; height: 0;
+.transform-layer{
+  position:absolute;top:0;left:0;
+  transform-origin:0 0;
+  width:0;height:0;
 }
 
 /* ============ Drawing SVG ============ */
-.drawing-svg {
-  position: absolute;
-  top: -10000px; left: -10000px;
-  width: 20000px; height: 20000px;
-  overflow: visible;
-  pointer-events: none;
+.drawing-svg{
+  position:absolute;top:-10000px;left:-10000px;
+  width:20000px;height:20000px;
+  overflow:visible;pointer-events:none;
 }
-.drawing-svg path { pointer-events: stroke; }
-.drawing-svg .connection-line {
-  pointer-events: stroke;
-  cursor: pointer;
-}
+.drawing-svg path{pointer-events:stroke}
+.drawing-svg .connection-line{pointer-events:stroke;cursor:pointer}
 
-/* ============ Sticky Notes ============ */
-.sticky-note {
-  position: absolute;
-  width: 200px; min-height: 160px;
-  border-radius: 8px;
-  box-shadow: 0 2px 8px rgba(0,0,0,0.12), 0 1px 3px rgba(0,0,0,0.08);
-  cursor: move;
-  display: flex; flex-direction: column;
-  transition: box-shadow 0.2s;
-  z-index: 10;
+/* ============ Sticky Notes (mobile sized) ============ */
+.sticky-note{
+  position:absolute;
+  width:180px;min-height:140px;
+  border-radius:10px;
+  box-shadow:0 2px 8px rgba(0,0,0,.12),0 1px 3px rgba(0,0,0,.08);
+  display:flex;flex-direction:column;
+  z-index:10;
 }
-.sticky-note:hover { box-shadow: 0 4px 16px rgba(0,0,0,0.16), 0 2px 6px rgba(0,0,0,0.1); }
-.sticky-note.selected { box-shadow: 0 0 0 3px #6366f1, 0 4px 16px rgba(99,102,241,0.3); z-index: 20; }
+.sticky-note.selected{
+  box-shadow:0 0 0 3px #6366f1,0 4px 20px rgba(99,102,241,.35);
+  z-index:20;
+}
+.note-header{
+  display:flex;align-items:center;justify-content:space-between;
+  padding:6px 8px 4px;border-radius:10px 10px 0 0;
+  min-height:32px;
+}
+.note-colors{display:flex;gap:4px}
+.note-color-dot{
+  width:16px;height:16px;border-radius:50%;
+  border:1.5px solid rgba(0,0,0,.2);
+  cursor:pointer;transition:transform .15s;
+}
+.note-color-dot:active{transform:scale(1.4)}
+.note-color-dot.active{border-color:rgba(0,0,0,.6);box-shadow:0 0 0 2px rgba(0,0,0,.2)}
+.note-delete-btn{
+  width:24px;height:24px;border:none;
+  background:rgba(0,0,0,.1);border-radius:50%;
+  cursor:pointer;font-size:16px;line-height:1;
+  display:flex;align-items:center;justify-content:center;
+  color:rgba(0,0,0,.5);transition:all .15s;
+}
+.note-delete-btn:active{background:rgba(255,0,0,.2);color:#c00}
 
-.note-header {
-  display: flex; align-items: center; justify-content: space-between;
-  padding: 8px 10px 4px;
-  border-radius: 8px 8px 0 0;
+.note-body{
+  flex:1;padding:4px 10px 10px;outline:none;
+  font-size:15px;line-height:1.6;
+  color:rgba(0,0,0,.8);
+  word-wrap:break-word;overflow-wrap:break-word;
+  min-height:70px;
+  -webkit-user-select:text;user-select:text;
 }
-.note-colors {
-  display: flex; gap: 3px;
+.note-body:empty::before{
+  content:'点此编辑…';
+  color:rgba(0,0,0,.25);pointer-events:none;
 }
-.note-color-dot {
-  width: 12px; height: 12px;
-  border-radius: 50%; border: 1.5px solid rgba(0,0,0,0.2);
-  cursor: pointer; transition: transform 0.15s;
-}
-.note-color-dot:hover { transform: scale(1.3); }
-.note-color-dot.active { border-color: rgba(0,0,0,0.6); box-shadow: 0 0 0 2px rgba(0,0,0,0.2); }
-
-.note-delete-btn {
-  width: 20px; height: 20px;
-  border: none; background: rgba(0,0,0,0.1);
-  border-radius: 50%; cursor: pointer;
-  font-size: 14px; line-height: 1;
-  display: flex; align-items: center; justify-content: center;
-  color: rgba(0,0,0,0.5);
-  transition: all 0.15s;
-}
-.note-delete-btn:hover { background: rgba(255,0,0,0.2); color: #c00; }
-
-.note-body {
-  flex: 1; padding: 4px 10px 10px;
-  outline: none;
-  font-size: 14px; line-height: 1.6;
-  color: rgba(0,0,0,0.8);
-  word-wrap: break-word;
-  overflow-wrap: break-word;
-  min-height: 80px;
-  cursor: text;
-  user-select: text;
-  -webkit-user-select: text;
-}
-.note-body:empty::before {
-  content: '双击编辑文本...';
-  color: rgba(0,0,0,0.3);
-  pointer-events: none;
-}
-.note-body:focus { cursor: text; }
-
-.note-resize-handle {
-  position: absolute; bottom: 0; right: 0;
-  width: 14px; height: 14px;
-  cursor: nwse-resize;
-  background: linear-gradient(135deg, transparent 50%, rgba(0,0,0,0.2) 50%);
-  border-radius: 0 0 8px 0;
-}
-
-/* ============ Selection Handles ============ */
-.selection-handles {
-  position: absolute; pointer-events: none; z-index: 100;
-}
-.selection-handle {
-  position: absolute;
-  width: 10px; height: 10px;
-  background: #fff;
-  border: 2px solid #6366f1;
-  border-radius: 2px;
-  pointer-events: auto;
-}
-.selection-handle.tl { top: -5px; left: -5px; cursor: nw-resize; }
-.selection-handle.tr { top: -5px; right: -5px; cursor: ne-resize; }
-.selection-handle.bl { bottom: -5px; left: -5px; cursor: sw-resize; }
-.selection-handle.br { bottom: -5px; right: -5px; cursor: se-resize; }
-
-.selection-outline {
-  position: absolute; top: -3px; left: -3px; right: -3px; bottom: -3px;
-  border: 2px dashed #6366f1; border-radius: 10px; pointer-events: none;
+.note-body:focus{-webkit-user-select:text;user-select:text}
+.note-resize-handle{
+  position:absolute;bottom:0;right:0;
+  width:20px;height:20px;
+  background:linear-gradient(135deg,transparent 50%,rgba(0,0,0,.2) 50%);
+  border-radius:0 0 10px 0;
 }
 
 /* ============ Minimap ============ */
-.minimap {
-  position: fixed; bottom: 20px; right: 20px;
-  width: 180px; height: 120px;
-  background: #fff;
-  border: 2px solid #d0d0d0;
-  border-radius: 10px;
-  box-shadow: 0 4px 16px rgba(0,0,0,0.12);
-  z-index: 900;
-  overflow: hidden;
-  cursor: pointer;
+.minimap{
+  position:fixed;bottom:16px;right:12px;
+  width:130px;height:90px;
+  background:#fff;border:2px solid #d0d0d0;
+  border-radius:10px;box-shadow:0 4px 16px rgba(0,0,0,.12);
+  z-index:900;overflow:hidden;
 }
-.minimap canvas {
-  width: 100%; height: 100%;
-  display: block;
-}
-.minimap-label {
-  position: absolute; bottom: 2px; left: 50%;
-  transform: translateX(-50%);
-  font-size: 9px; color: #999;
-  pointer-events: none;
-}
-
-/* ============ Context Menu ============ */
-.context-menu {
-  position: fixed; z-index: 2000;
-  background: #fff;
-  border-radius: 8px; box-shadow: 0 4px 20px rgba(0,0,0,0.15);
-  min-width: 140px; padding: 4px 0;
-  display: none;
-}
-.context-menu.show { display: block; }
-.context-menu-item {
-  padding: 8px 16px;
-  font-size: 13px; cursor: pointer;
-  display: flex; align-items: center; gap: 8px;
-  color: #333;
-  transition: background 0.1s;
-}
-.context-menu-item:hover { background: #f0f0f5; }
-.context-menu-item.danger { color: #d32f2f; }
-.context-menu-divider {
-  height: 1px; background: #eee; margin: 4px 0;
+.minimap canvas{width:100%;height:100%;display:block}
+.minimap-label{
+  position:absolute;bottom:1px;left:50%;transform:translateX(-50%);
+  font-size:8px;color:#999;pointer-events:none;
 }
 
 /* ============ Zoom indicator ============ */
-.zoom-indicator {
-  position: fixed; bottom: 20px; left: 50%;
-  transform: translateX(-50%);
-  background: rgba(0,0,0,0.65); color: #fff;
-  font-size: 12px; padding: 4px 12px;
-  border-radius: 12px;
-  pointer-events: none;
-  opacity: 0; transition: opacity 0.2s;
-  z-index: 950;
+.zoom-indicator{
+  position:fixed;bottom:20px;left:50%;transform:translateX(-50%);
+  background:rgba(0,0,0,.7);color:#fff;
+  font-size:13px;padding:5px 14px;border-radius:14px;
+  pointer-events:none;opacity:0;transition:opacity .2s;
+  z-index:950;
 }
-.zoom-indicator.show { opacity: 1; }
+.zoom-indicator.show{opacity:1}
 
-/* ============ Color Palette ============ */
-.note-colors-palette {
-  display: flex; gap: 4px;
+/* ============ Context Menu (mobile sheet) ============ */
+.context-menu{
+  position:fixed;bottom:0;left:0;right:0;z-index:2000;
+  background:#fff;border-radius:16px 16px 0 0;
+  box-shadow:0 -4px 20px rgba(0,0,0,.15);
+  padding:8px 0 24px;
+  transform:translateY(100%);transition:transform .25s ease;
+}
+.context-menu.show{transform:translateY(0)}
+.context-menu-backdrop{
+  position:fixed;inset:0;z-index:1999;background:rgba(0,0,0,.3);
+  display:none;
+}
+.context-menu-backdrop.show{display:block}
+.context-menu-item{
+  padding:14px 24px;font-size:16px;cursor:pointer;
+  display:flex;align-items:center;gap:12px;color:#333;
+  transition:background .1s;
+  -webkit-tap-highlight-color:transparent;
+}
+.context-menu-item:active{background:#f0f0f5}
+.context-menu-item.danger{color:#d32f2f}
+.context-menu-handle{
+  width:36px;height:5px;background:#ddd;
+  border-radius:3px;margin:0 auto 8px;
+}
+.context-menu-divider{height:1px;background:#eee;margin:4px 0}
+
+/* ============ Long press ripple ============ */
+@keyframes longpress-ripple{to{transform:scale(3);opacity:0}}
+.longpress-indicator{
+  position:fixed;width:50px;height:50px;
+  border-radius:50%;border:3px solid #6366f1;
+  transform:translate(-50%,-50%) scale(.5);
+  opacity:.8;pointer-events:none;z-index:1500;
+  animation:longpress-ripple .6s ease-out forwards;
 }
 
-/* ============ Inline SVG icon colors ============ */
-.tool-btn svg use { pointer-events: none; }
+/* ============ Responsive ============ */
+@media(min-width:768px){
+  .tool-label{display:inline}
+  .toolbar{padding:0 12px}
+  .toolbar-group{padding:0 6px}
+  .tool-settings-panel{position:static;display:none;background:transparent;padding:0;box-shadow:none}
+  .tool-settings-panel.show{display:flex}
+  .sticky-note{width:200px;min-height:160px}
+  .minimap{width:160px;height:110px}
+}
+@media(min-width:1024px){
+  .toolbar{padding:0 16px}
+  .sticky-note{width:220px;min-height:170px}
+  .note-body{font-size:14px}
+  .minimap{width:180px;height:120px}
+}
+
+/* Safe area for notched phones */
+@supports(padding-top:env(safe-area-inset-top)){
+  .toolbar{padding-top:env(safe-area-inset-top);height:calc(50px + env(safe-area-inset-top))}
+  .canvas-container{top:calc(50px + env(safe-area-inset-top))}
+  .context-menu{padding-bottom:calc(24px + env(safe-area-inset-bottom))}
+}
 </style>
 </head>
 <body>
 
 <!-- ============ TOOLBAR ============ -->
 <div class="toolbar" id="toolbar">
-  <div class="toolbar-group">
-    <button class="tool-btn active" data-tool="select" data-tooltip="选择 (V)" id="btn-select">
-      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-        <path d="M4 4l6 16 2-6 6-2z"/>
-        <line x1="13" y1="13" x2="20" y2="20"/>
-      </svg>
-    </button>
-    <button class="tool-btn" data-tool="note" data-tooltip="便签 (N)" id="btn-note">
-      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-        <rect x="4" y="3" width="16" height="18" rx="2"/>
-        <line x1="8" y1="8" x2="16" y2="8"/>
-        <line x1="8" y1="12" x2="16" y2="12"/>
-        <line x1="8" y1="16" x2="12" y2="16"/>
-      </svg>
-    </button>
-    <button class="tool-btn" data-tool="pen" data-tooltip="画笔 (P)" id="btn-pen">
-      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-        <path d="M12 20h9"/>
-        <path d="M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4L16.5 3.5z"/>
-      </svg>
-    </button>
-    <button class="tool-btn" data-tool="connection" data-tooltip="连线 (C)" id="btn-connection">
-      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-        <circle cx="5" cy="5" r="2"/>
-        <circle cx="19" cy="19" r="2"/>
-        <path d="M5 7v4a4 4 0 0 0 4 4h6a4 4 0 0 1 4 4v1"/>
-      </svg>
-    </button>
-  </div>
+  <button class="tool-btn active" data-tool="select" id="btn-select">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+      <path d="M4 4l6 16 2-6 6-2z"/><line x1="13" y1="13" x2="20" y2="20"/>
+    </svg>
+  </button>
+  <button class="tool-btn" data-tool="note" id="btn-note">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+      <rect x="4" y="3" width="16" height="18" rx="2"/>
+      <line x1="8" y1="8" x2="16" y2="8"/><line x1="8" y1="12" x2="16" y2="12"/><line x1="8" y1="16" x2="12" y2="16"/>
+    </svg>
+  </button>
+  <button class="tool-btn" data-tool="pen" id="btn-pen">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+      <path d="M12 20h9"/><path d="M16.5 3.5a2.121 2.121 0 013 3L7 19l-4 1 1-4L16.5 3.5z"/>
+    </svg>
+  </button>
+  <button class="tool-btn" data-tool="connection" id="btn-connection">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+      <circle cx="5" cy="5" r="2"/><circle cx="19" cy="19" r="2"/>
+      <path d="M5 7v4a4 4 0 004 4h6a4 4 0 014 4v1"/>
+    </svg>
+  </button>
 
   <div class="toolbar-divider"></div>
 
-  <!-- Pen settings (show when pen tool active) -->
-  <div class="toolbar-group" id="pen-settings" style="display:none;">
-    <span class="tool-label">颜色</span>
-    <span class="color-swatch active" data-pen-color="#1a1a2e" style="background:#1a1a2e;"></span>
-    <span class="color-swatch" data-pen-color="#e74c3c" style="background:#e74c3c;"></span>
-    <span class="color-swatch" data-pen-color="#2980b9" style="background:#2980b9;"></span>
-    <span class="color-swatch" data-pen-color="#27ae60" style="background:#27ae60;"></span>
-    <span class="color-swatch" data-pen-color="#f39c12" style="background:#f39c12;"></span>
-    <span class="color-swatch" data-pen-color="#8e44ad" style="background:#8e44ad;"></span>
-    <div class="toolbar-divider" style="margin:0 6px;"></div>
-    <span class="tool-label">粗细</span>
-    <button class="thickness-btn active" data-thickness="2"><span class="thickness-dot" style="width:4px;height:4px;"></span></button>
-    <button class="thickness-btn" data-thickness="4"><span class="thickness-dot" style="width:7px;height:7px;"></span></button>
-    <button class="thickness-btn" data-thickness="6"><span class="thickness-dot" style="width:10px;height:10px;"></span></button>
-    <button class="thickness-btn" data-thickness="10"><span class="thickness-dot" style="width:14px;height:14px;"></span></button>
+  <!-- Pen settings -->
+  <div class="toolbar-group pen-settings" style="display:none">
+    <span class="color-swatch active" data-pen-color="#1a1a2e" style="background:#1a1a2e"></span>
+    <span class="color-swatch" data-pen-color="#e74c3c" style="background:#e74c3c"></span>
+    <span class="color-swatch" data-pen-color="#2980b9" style="background:#2980b9"></span>
+    <span class="color-swatch" data-pen-color="#27ae60" style="background:#27ae60"></span>
+    <span class="color-swatch" data-pen-color="#f39c12" style="background:#f39c12"></span>
+    <span class="color-swatch" data-pen-color="#8e44ad" style="background:#8e44ad"></span>
+    <div class="toolbar-divider" style="margin:0 4px"></div>
+    <button class="thickness-btn active" data-thickness="2"><span class="thickness-dot" style="width:4px;height:4px"></span></button>
+    <button class="thickness-btn" data-thickness="4"><span class="thickness-dot" style="width:7px;height:7px"></span></button>
+    <button class="thickness-btn" data-thickness="6"><span class="thickness-dot" style="width:10px;height:10px"></span></button>
+    <button class="thickness-btn" data-thickness="10"><span class="thickness-dot" style="width:14px;height:14px"></span></button>
   </div>
 
-  <!-- Note settings (show when note tool active) -->
-  <div class="toolbar-group" id="note-settings" style="display:none;">
-    <span class="tool-label">预设颜色</span>
-    <span class="color-swatch active" data-preset-color="#FFF9C4" style="background:#FFF9C4;" title="黄色"></span>
-    <span class="color-swatch" data-preset-color="#FFCDD2" style="background:#FFCDD2;" title="粉色"></span>
-    <span class="color-swatch" data-preset-color="#BBDEFB" style="background:#BBDEFB;" title="蓝色"></span>
-    <span class="color-swatch" data-preset-color="#C8E6C9" style="background:#C8E6C9;" title="绿色"></span>
-    <span class="color-swatch" data-preset-color="#FFE0B2" style="background:#FFE0B2;" title="橙色"></span>
-    <span class="color-swatch" data-preset-color="#E1BEE7" style="background:#E1BEE7;" title="紫色"></span>
+  <!-- Note settings -->
+  <div class="toolbar-group note-settings" style="display:none">
+    <span class="color-swatch active" data-preset-color="#FFF9C4" style="background:#FFF9C4"></span>
+    <span class="color-swatch" data-preset-color="#FFCDD2" style="background:#FFCDD2"></span>
+    <span class="color-swatch" data-preset-color="#BBDEFB" style="background:#BBDEFB"></span>
+    <span class="color-swatch" data-preset-color="#C8E6C9" style="background:#C8E6C9"></span>
+    <span class="color-swatch" data-preset-color="#FFE0B2" style="background:#FFE0B2"></span>
+    <span class="color-swatch" data-preset-color="#E1BEE7" style="background:#E1BEE7"></span>
   </div>
 
   <!-- Connection settings -->
-  <div class="toolbar-group" id="connect-settings" style="display:none;">
-    <span class="tool-label">连线颜色</span>
-    <span class="color-swatch active" data-conn-color="#6366f1" style="background:#6366f1;"></span>
-    <span class="color-swatch" data-conn-color="#1a1a2e" style="background:#1a1a2e;"></span>
-    <span class="color-swatch" data-conn-color="#e74c3c" style="background:#e74c3c;"></span>
-    <span class="color-swatch" data-conn-color="#27ae60" style="background:#27ae60;"></span>
-    <span class="color-swatch" data-conn-color="#f39c12" style="background:#f39c12;"></span>
+  <div class="toolbar-group connect-settings" style="display:none">
+    <span class="color-swatch active" data-conn-color="#6366f1" style="background:#6366f1"></span>
+    <span class="color-swatch" data-conn-color="#1a1a2e" style="background:#1a1a2e"></span>
+    <span class="color-swatch" data-conn-color="#e74c3c" style="background:#e74c3c"></span>
+    <span class="color-swatch" data-conn-color="#27ae60" style="background:#27ae60"></span>
+    <span class="color-swatch" data-conn-color="#f39c12" style="background:#f39c12"></span>
   </div>
 
-  <div style="flex:1;"></div>
+  <div style="flex:1"></div>
 
-  <!-- Right side actions -->
-  <div class="toolbar-group">
-    <button class="tool-btn" data-tooltip="清空画布" id="btn-clear" style="color:rgba(255,255,255,0.5);">
-      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-        <polyline points="3 6 5 6 21 6"/>
-        <path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6"/>
-        <path d="M10 11v6"/><path d="M14 11v6"/>
-        <path d="M9 6V4a1 1 0 0 1 1-1h4a1 1 0 0 1 1 1v2"/>
-      </svg>
-    </button>
-    <button class="tool-btn" data-tooltip="适应画布 (0)" id="btn-fit" style="color:rgba(255,255,255,0.7);">
-      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-        <path d="M15 3h6v6M9 21H3v-6M21 3l-7 7M3 21l7-7"/>
-      </svg>
-    </button>
-  </div>
+  <button class="tool-btn" id="btn-clear" style="color:rgba(255,255,255,.5)">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+      <polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14a2 2 0 01-2 2H8a2 2 0 01-2-2L5 6"/>
+      <path d="M10 11v6"/><path d="M14 11v6"/><path d="M9 6V4a1 1 0 011-1h4a1 1 0 011 1v2"/>
+    </svg>
+  </button>
+  <button class="tool-btn" id="btn-fit" style="color:rgba(255,255,255,.7)">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+      <path d="M15 3h6v6M9 21H3v-6M21 3l-7 7M3 21l7-7"/>
+    </svg>
+  </button>
 </div>
 
-<!-- ============ CANVAS ============ -->
+<!-- Canvas -->
 <div class="canvas-container" id="canvasContainer">
   <div class="transform-layer" id="transformLayer">
-    <!-- SVG for drawings and connections -->
     <svg class="drawing-svg" id="drawingSvg"></svg>
-    <!-- Sticky notes will be appended here as divs -->
   </div>
 </div>
 
-<!-- ============ MINIMAP ============ -->
+<!-- Minimap -->
 <div class="minimap" id="minimap">
   <canvas id="minimapCanvas"></canvas>
-  <span class="minimap-label">迷你地图</span>
+  <span class="minimap-label">地图</span>
 </div>
 
-<!-- ============ ZOOM INDICATOR ============ -->
+<!-- Zoom indicator -->
 <div class="zoom-indicator" id="zoomIndicator">100%</div>
 
-<!-- ============ CONTEXT MENU ============ -->
+<!-- Context menu backdrop -->
+<div class="context-menu-backdrop" id="contextMenuBackdrop"></div>
+
+<!-- Context menu (bottom sheet) -->
 <div class="context-menu" id="contextMenu">
+  <div class="context-menu-handle"></div>
   <div class="context-menu-item" data-action="delete">🗑️ 删除</div>
   <div class="context-menu-item" data-action="duplicate">📋 复制</div>
   <div class="context-menu-divider"></div>
@@ -406,15 +350,27 @@ body {
 </div>
 
 <script>
-// =================================================================
-//  STATE MANAGEMENT
-// =================================================================
+// ====================================================================
+// STATE
+// ====================================================================
 const state = {
   currentTool: 'select',
   viewport: { x: 0, y: 0, zoom: 1 },
+
+  // Touch / pan
   isPanning: false,
-  panStart: { x: 0, y: 0 },
+  panStart: null,
+  panLast: null,
   viewportAtStart: { x: 0, y: 0 },
+  panMoved: false,
+  panStartTime: 0,
+
+  // Pinch zoom
+  isPinching: false,
+  pinchStartDist: 0,
+  pinchStartZoom: 1,
+  pinchMidX: 0, pinchMidY: 0,
+  pinchViewportStart: { x: 0, y: 0 },
 
   // Pen
   isDrawing: false,
@@ -436,235 +392,453 @@ const state = {
   // Selection
   selectedElementId: null,
 
-  // Dragging
+  // Drag element
   isDraggingElement: false,
   dragTarget: null,
   dragOffset: { x: 0, y: 0 },
 
-  // Resizing
+  // Resize
   isResizing: false,
   resizeTarget: null,
   resizeStart: { x: 0, y: 0, w: 0, h: 0 },
 
-  // Elements tracking
+  // Long press
+  longPressTimer: null,
+  longPressTarget: null,
+  longPressPos: null,
+
+  // Double tap
+  lastTapTime: 0,
+  lastTapTarget: null,
+  lastTapPos: null,
+
+  // Elements
   elements: [],
   pathCounter: 0,
   connectionCounter: 0,
-
-  // For connection proximity detection
-  connectionThreshold: 20
 };
 
-// =================================================================
-//  DOM REFS
-// =================================================================
+// ====================================================================
+// DOM
+// ====================================================================
 const canvasContainer = document.getElementById('canvasContainer');
 const transformLayer = document.getElementById('transformLayer');
 const drawingSvg = document.getElementById('drawingSvg');
 const zoomIndicator = document.getElementById('zoomIndicator');
 const contextMenu = document.getElementById('contextMenu');
+const contextMenuBackdrop = document.getElementById('contextMenuBackdrop');
 const minimapCanvas = document.getElementById('minimapCanvas');
 const minimapContainer = document.getElementById('minimap');
 
-// =================================================================
-//  UTILITY FUNCTIONS
-// =================================================================
-function screenToCanvas(sx, sy) {
-  const rect = canvasContainer.getBoundingClientRect();
-  return {
-    x: (sx - rect.left - state.viewport.x) / state.viewport.zoom,
-    y: (sy - rect.top - state.viewport.y) / state.viewport.zoom
-  };
-}
+// Detect touch device
+const isTouchDevice = 'ontouchstart' in window || navigator.maxTouchPoints > 0;
 
-function canvasToScreen(cx, cy) {
-  const rect = canvasContainer.getBoundingClientRect();
+// ====================================================================
+// UTILITY
+// ====================================================================
+function screenToCanvas(sx, sy) {
+  const r = canvasContainer.getBoundingClientRect();
   return {
-    x: cx * state.viewport.zoom + state.viewport.x + rect.left,
-    y: cy * state.viewport.zoom + state.viewport.y + rect.top
+    x: (sx - r.left - state.viewport.x) / state.viewport.zoom,
+    y: (sy - r.top - state.viewport.y) / state.viewport.zoom
   };
 }
 
 function updateTransform() {
-  transformLayer.style.transform = `translate(${state.viewport.x}px, ${state.viewport.y}px) scale(${state.viewport.zoom})`;
-  // Update grid offset
+  transformLayer.style.transform =
+    `translate(${state.viewport.x}px,${state.viewport.y}px) scale(${state.viewport.zoom})`;
   canvasContainer.style.backgroundPosition = `${state.viewport.x}px ${state.viewport.y}px`;
   updateMinimap();
 }
 
-function generateId(prefix) {
-  return `${prefix}-${Date.now()}-${Math.random().toString(36).substr(2, 6)}`;
+function generateId(p) {
+  return `${p}-${Date.now()}-${Math.random().toString(36).substr(2,6)}`;
 }
 
-function setCaretAtClick(e, el) {
-  // Place cursor at approximate click position in contenteditable
-  const range = document.caretRangeFromPoint(e.clientX, e.clientY);
-  if (range) {
+function getDist(t1, t2) {
+  return Math.hypot(t2.clientX - t1.clientX, t2.clientY - t1.clientY);
+}
+
+function getMid(t1, t2) {
+  return { x: (t1.clientX + t2.clientX) / 2, y: (t1.clientY + t2.clientY) / 2 };
+}
+
+function posFromEvent(e) {
+  if (e.touches && e.touches.length > 0)
+    return { x: e.touches[0].clientX, y: e.touches[0].clientY };
+  return { x: e.clientX, y: e.clientY };
+}
+
+// ====================================================================
+// UNIFIED INPUT HANDLER
+// Every touch/mouse event goes through here first
+// ====================================================================
+canvasContainer.addEventListener('touchstart', onPointerDown, { passive: false });
+canvasContainer.addEventListener('mousedown', onPointerDown);
+canvasContainer.addEventListener('touchmove', onPointerMove, { passive: false });
+canvasContainer.addEventListener('mousemove', onPointerMove);
+canvasContainer.addEventListener('touchend', onPointerUp);
+canvasContainer.addEventListener('mouseup', onPointerUp);
+canvasContainer.addEventListener('touchcancel', onPointerUp);
+canvasContainer.addEventListener('mouseleave', () => {
+  if (!isTouchDevice) cancelAll();
+});
+canvasContainer.addEventListener('wheel', onWheel, { passive: false });
+
+// Prevent default mobile behaviors
+document.addEventListener('touchmove', function(e) {
+  if (e.target.closest('.note-body') && e.target.closest('.note-body').isContentEditable) return;
+  if (e.target.closest('#canvasContainer') || e.target.closest('.toolbar')) {
+    e.preventDefault();
+  }
+}, { passive: false });
+
+document.addEventListener('gesturestart', e => e.preventDefault());
+document.addEventListener('gesturechange', e => e.preventDefault());
+document.addEventListener('gestureend', e => e.preventDefault());
+
+function onPointerDown(e) {
+  if (e.target.closest('.toolbar')) return;
+  if (e.target.closest('.context-menu') || e.target.closest('.context-menu-backdrop')) return;
+  e.preventDefault();
+
+  const touches = e.touches;
+
+  // Two-finger → pinch
+  if (touches && touches.length === 2) {
+    cancelAll();
+    startPinch(touches[0], touches[1]);
+    return;
+  }
+
+  // One finger or mouse
+  if ((touches && touches.length === 1) || !touches) {
+    const p = posFromEvent(e);
+    state.panStart = { x: p.x, y: p.y };
+    state.panLast = { x: p.x, y: p.y };
+    state.viewportAtStart = { ...state.viewport };
+    state.panMoved = false;
+    state.panStartTime = Date.now();
+
+    // Check target
+    const noteEl = e.target.closest('.sticky-note');
+    const noteBody = e.target.closest('.note-body');
+    const noteHeader = e.target.closest('.note-header');
+    const resizeHandle = e.target.closest('.note-resize-handle');
+    const connLine = e.target.closest('.connection-line');
+    const svgPath = e.target.closest('path[data-type="path"]');
+
+    // Resize handle — always in select mode
+    if (resizeHandle && state.currentTool === 'select') {
+      clearLongPress();
+      state.isResizing = true;
+      state.resizeTarget = resizeHandle.parentElement;
+      const cp = screenToCanvas(p.x, p.y);
+      state.resizeStart = { x: cp.x, y: cp.y, w: parseFloat(state.resizeTarget.style.width), h: parseFloat(state.resizeTarget.style.minHeight) };
+      return;
+    }
+
+    // Note — select + prep long press + prep drag
+    if (noteEl && state.currentTool === 'select') {
+      selectElementUI(noteEl.id);
+      // Start long press timer
+      state.longPressTarget = noteEl;
+      state.longPressPos = p;
+      clearLongPress();
+      state.longPressTimer = setTimeout(() => triggerLongPress(noteEl, p), 500);
+
+      // Pre-focus note body on touch
+      if (noteBody) {
+        setTimeout(() => { if (state.selectedElementId === noteEl.id) noteBody.focus(); }, 80);
+      }
+      return;
+    }
+
+    // Path or connection — select
+    if (svgPath && state.currentTool === 'select' && !noteEl) { selectElementUI(svgPath.id); return; }
+    if (connLine && state.currentTool === 'select' && !noteEl) { selectConnection(connLine); return; }
+
+    // Pen mode
+    if (state.currentTool === 'pen' && !noteEl) { clearLongPress(); startDrawing(e); return; }
+
+    // Connection mode
+    if (state.currentTool === 'connection' && !noteEl) { clearLongPress(); startConnection(e); return; }
+
+    // Note mode — tap will create note (handled in pointerup)
+    if (state.currentTool === 'note') return;
+  }
+}
+
+function onPointerMove(e) {
+  e.preventDefault();
+  const touches = e.touches;
+
+  // Pinch
+  if (touches && touches.length === 2) {
+    if (state.isPinching) updatePinch(touches[0], touches[1]);
+    else { clearLongPress(); cancelAll(); startPinch(touches[0], touches[1]); }
+    return;
+  }
+  if (state.isPinching) return;
+
+  const p = posFromEvent(e);
+
+  if (state.isDrawing) { clearLongPress(); updateDrawing(e); return; }
+  if (state.isConnecting) { updateConnection(e); return; }
+  if (state.isDraggingElement) { updateDragElement(p); return; }
+  if (state.isResizing) { updateResize(p); return; }
+
+  // Detect if moved enough → decide pan vs drag note
+  if (state.panStart && !state.isPanning && !state.isDraggingElement) {
+    const dx = p.x - state.panStart.x;
+    const dy = p.y - state.panStart.y;
+    const moved = Math.abs(dx) > 4 || Math.abs(dy) > 4;
+
+    if (moved) {
+      clearLongPress();
+      state.longPressTarget = null;
+
+      // If we started on a note and in select mode, drag the note
+      const noteEl = document.elementFromPoint(p.x, p.y)?.closest('.sticky-note');
+      if (noteEl && state.currentTool === 'select' && state.selectedElementId === noteEl.id) {
+        const cp = screenToCanvas(p.x, p.y);
+        state.isDraggingElement = true;
+        state.dragTarget = noteEl;
+        state.dragOffset = { x: cp.x - parseFloat(noteEl.style.left), y: cp.y - parseFloat(noteEl.style.top) };
+        noteEl.style.zIndex = 999;
+        return;
+      }
+
+      // Otherwise, pan
+      startPan(p);
+    }
+  }
+
+  if (state.isPanning) updatePan(p);
+  state.panLast = { x: p.x, y: p.y };
+}
+
+function onPointerUp(e) {
+  const touches = e.touches;
+
+  if (state.isPinching && (!touches || touches.length < 2)) { endPinch(); return; }
+  if (state.isDrawing) { endDrawing(); clearLongPress(); return; }
+  if (state.isConnecting) { endConnection(e); clearLongPress(); return; }
+  if (state.isDraggingElement) { endDragElement(); return; }
+  if (state.isResizing) { endResize(); return; }
+  if (state.isPanning) { endPan(); return; }
+
+  // Tap detection
+  const dt = Date.now() - state.panStartTime;
+  if (dt < 500 && !state.panMoved && state.panStart) {
+    handleTap(e);
+  }
+
+  state.panStart = null;
+  state.panLast = null;
+  state.panMoved = false;
+}
+
+// ====================================================================
+// TAP HANDLING (single tap / double tap)
+// ====================================================================
+function handleTap(e) {
+  const now = Date.now();
+  const p = posFromEvent(e);
+  const target = e.target;
+
+  const noteEl = target.closest('.sticky-note');
+  const noteBody = target.closest('.note-body');
+
+  // Double tap detection
+  if (state.lastTapTarget === (noteEl ? noteEl.id : null) &&
+      now - state.lastTapTime < 350 &&
+      state.lastTapPos && p &&
+      Math.abs(p.x - state.lastTapPos.x) < 20 &&
+      Math.abs(p.y - state.lastTapPos.y) < 20) {
+    // Double tap!
+    clearLongPress();
+    state.longPressTarget = null;
+    handleDoubleTap(e, noteEl);
+    state.lastTapTime = 0;
+    state.lastTapTarget = null;
+    state.lastTapPos = null;
+    return;
+  }
+
+  state.lastTapTime = now;
+  state.lastTapPos = p;
+
+  if (noteEl && state.currentTool === 'select') {
+    state.lastTapTarget = noteEl.id;
+    selectElementUI(noteEl.id);
+
+    // Tap on note body → edit
+    if (noteBody) {
+      setTimeout(() => {
+        if (state.selectedElementId === noteEl.id) {
+          noteBody.focus();
+        }
+      }, 50);
+    }
+    return;
+  }
+
+  if (noteEl && state.currentTool === 'note') {
+    // In note mode, tap on blank only → create note
+    state.lastTapTarget = null;
+    return;
+  }
+
+  // Note mode → create note
+  if (state.currentTool === 'note' && !noteEl) {
+    addNoteAtPos(p);
+    state.lastTapTarget = null;
+    return;
+  }
+
+  // Deselect
+  if (state.currentTool === 'select' && !noteEl) {
+    deselectAll();
+  }
+
+  state.lastTapTarget = null;
+}
+
+function handleDoubleTap(e, noteEl) {
+  if (!noteEl || state.currentTool !== 'select') return;
+  const body = noteEl.querySelector('.note-body');
+  if (body) {
+    body.focus();
+    // Select all text
+    const range = document.createRange();
+    range.selectNodeContents(body);
     const sel = window.getSelection();
     sel.removeAllRanges();
     sel.addRange(range);
-  } else {
-    // Fallback: cursor at end
-    el.focus();
-    const r = document.createRange();
-    r.selectNodeContents(el);
-    r.collapse(false);
-    const sel = window.getSelection();
-    sel.removeAllRanges();
-    sel.addRange(r);
   }
 }
 
-// =================================================================
-//  VIEWPORT: PAN & ZOOM
-// =================================================================
-canvasContainer.addEventListener('mousedown', (e) => {
-  // Ignore if clicking on toolbar-like elements or context menu
-  if (e.target.closest('.toolbar') || e.target.closest('.context-menu')) return;
-
-  // Middle mouse button or space+click = pan
-  if (e.button === 1 || (e.button === 0 && e.altKey)) {
-    e.preventDefault();
-    startPan(e);
-    return;
+// ====================================================================
+// LONG PRESS
+// ====================================================================
+function clearLongPress() {
+  if (state.longPressTimer) {
+    clearTimeout(state.longPressTimer);
+    state.longPressTimer = null;
   }
+}
 
-  if (e.button === 0) {
-    // Check if clicking on a sticky note
-    const noteEl = e.target.closest('.sticky-note');
-    if (noteEl && state.currentTool === 'select') {
-      selectElementUI(noteEl.id);
-      // Clicking on body → edit mode; clicking on header → drag mode
-      if (e.target.closest('.note-body')) {
-        const body = e.target.closest('.note-body');
-        body.focus();
-        // Place cursor at click position
-        setCaretAtClick(e, body);
-        return;
-      }
-      startDragElement(e, noteEl);
-      return;
-    }
+function triggerLongPress(noteEl, pos) {
+  state.longPressTarget = null;
+  clearLongPress();
+  selectElementUI(noteEl.id);
 
-    // Check resize handle
-    const handle = e.target.closest('.note-resize-handle');
-    if (handle && state.currentTool === 'select') {
-      startResize(e, handle.parentElement);
-      return;
-    }
+  // Show ripple
+  const ripple = document.createElement('div');
+  ripple.className = 'longpress-indicator';
+  ripple.style.left = pos.x + 'px';
+  ripple.style.top = pos.y + 'px';
+  document.body.appendChild(ripple);
+  setTimeout(() => ripple.remove(), 700);
 
-    // Check if clicking on connection line
-    if (state.currentTool === 'select') {
-      const connLine = e.target.closest('.connection-line');
-      if (connLine) {
-        selectConnection(connLine);
-        return;
-      }
-    }
+  // Vibrate if available
+  if (navigator.vibrate) navigator.vibrate(15);
 
-    // Tool-specific handling
-    if (state.currentTool === 'pen') {
-      startDrawing(e);
-      return;
-    }
-    if (state.currentTool === 'note') {
-      // Don't place note on top of existing elements
-      if (!e.target.closest('.sticky-note') && !e.target.closest('.connection-line')) {
-        addNoteAtClick(e);
-      }
-      return;
-    }
-    if (state.currentTool === 'connection') {
-      startConnection(e);
-      return;
-    }
+  showContextMenu();
+}
 
-    // Default: start panning
-    startPan(e);
-  }
-});
-
-canvasContainer.addEventListener('mousemove', (e) => {
-  if (state.isPanning) {
-    updatePan(e);
-    return;
-  }
-  if (state.isDrawing) {
-    updateDrawing(e);
-    return;
-  }
-  if (state.isDraggingElement) {
-    updateDragElement(e);
-    return;
-  }
-  if (state.isResizing) {
-    updateResize(e);
-    return;
-  }
-  if (state.isConnecting) {
-    updateConnection(e);
-    return;
-  }
-});
-
-canvasContainer.addEventListener('mouseup', (e) => {
-  if (state.isPanning) { endPan(); return; }
-  if (state.isDrawing) { endDrawing(); return; }
-  if (state.isDraggingElement) { endDragElement(); return; }
-  if (state.isResizing) { endResize(); return; }
-  if (state.isConnecting) { endConnection(e); return; }
-});
-
-canvasContainer.addEventListener('mouseleave', () => {
-  if (state.isPanning) endPan();
-  if (state.isDrawing) endDrawing();
-  if (state.isDraggingElement) endDragElement();
-  if (state.isResizing) endResize();
-  if (state.isConnecting) { cancelConnection(); }
-});
-
-canvasContainer.addEventListener('wheel', (e) => {
-  e.preventDefault();
-  const rect = canvasContainer.getBoundingClientRect();
-  const mx = e.clientX - rect.left;
-  const my = e.clientY - rect.top;
-
-  const zoomFactor = e.deltaY < 0 ? 1.08 : 1 / 1.08;
-  const newZoom = Math.min(5, Math.max(0.1, state.viewport.zoom * zoomFactor));
-
-  // Zoom towards cursor
-  state.viewport.x = mx - (mx - state.viewport.x) * (newZoom / state.viewport.zoom);
-  state.viewport.y = my - (my - state.viewport.y) * (newZoom / state.viewport.zoom);
-  state.viewport.zoom = newZoom;
-
-  updateTransform();
-  showZoomIndicator();
-}, { passive: false });
-
-// =================================================================
-//  PAN FUNCTIONS
-// =================================================================
-function startPan(e) {
+// ====================================================================
+// PAN
+// ====================================================================
+function startPan(p) {
   state.isPanning = true;
-  state.panStart = { x: e.clientX, y: e.clientY };
+  state.panMoved = true;
+  state.panStart = { x: p.x, y: p.y };
   state.viewportAtStart = { ...state.viewport };
-  canvasContainer.style.cursor = 'grabbing';
 }
 
-function updatePan(e) {
-  state.viewport.x = state.viewportAtStart.x + (e.clientX - state.panStart.x);
-  state.viewport.y = state.viewportAtStart.y + (e.clientY - state.panStart.y);
+function updatePan(p) {
+  state.panMoved = true;
+  state.viewport.x = state.viewportAtStart.x + (p.x - state.panStart.x);
+  state.viewport.y = state.viewportAtStart.y + (p.y - state.panStart.y);
   updateTransform();
 }
 
 function endPan() {
   state.isPanning = false;
-  updateCursor();
 }
 
-// =================================================================
-//  ZOOM INDICATOR
-// =================================================================
+// ====================================================================
+// PINCH ZOOM
+// ====================================================================
+function startPinch(t1, t2) {
+  state.isPinching = true;
+  state.pinchStartDist = getDist(t1, t2);
+  state.pinchStartZoom = state.viewport.zoom;
+  const mid = getMid(t1, t2);
+  state.pinchMidX = mid.x;
+  state.pinchMidY = mid.y;
+  state.pinchViewportStart = { ...state.viewport };
+}
+
+function updatePinch(t1, t2) {
+  if (!state.isPinching) return;
+  const dist = getDist(t1, t2);
+  if (state.pinchStartDist < 5) return;
+  const newZoom = Math.min(5, Math.max(0.1, state.pinchStartZoom * (dist / state.pinchStartDist)));
+  const containerRect = canvasContainer.getBoundingClientRect();
+  const mx = state.pinchMidX - containerRect.left;
+  const my = state.pinchMidY - containerRect.top;
+  state.viewport.x = mx - (mx - state.pinchViewportStart.x) * (newZoom / state.viewport.zoom);
+  state.viewport.y = my - (my - state.pinchViewportStart.y) * (newZoom / state.viewport.zoom);
+  state.viewport.zoom = newZoom;
+  updateTransform();
+  showZoomIndicator();
+}
+
+function endPinch() {
+  state.isPinching = false;
+}
+
+// ====================================================================
+// WHEEL ZOOM (desktop)
+// ====================================================================
+function onWheel(e) {
+  if (isTouchDevice) return;
+  e.preventDefault();
+  const r = canvasContainer.getBoundingClientRect();
+  const mx = e.clientX - r.left;
+  const my = e.clientY - r.top;
+  const f = e.deltaY < 0 ? 1.08 : 1 / 1.08;
+  const nz = Math.min(5, Math.max(0.1, state.viewport.zoom * f));
+  state.viewport.x = mx - (mx - state.viewport.x) * (nz / state.viewport.zoom);
+  state.viewport.y = my - (my - state.viewport.y) * (nz / state.viewport.zoom);
+  state.viewport.zoom = nz;
+  updateTransform();
+  showZoomIndicator();
+}
+
+// ====================================================================
+// CANCEL ALL
+// ====================================================================
+function cancelAll() {
+  clearLongPress();
+  state.longPressTarget = null;
+  if (state.isPanning) endPan();
+  if (state.isDrawing) endDrawing();
+  if (state.isDraggingElement) endDragElement();
+  if (state.isResizing) endResize();
+  if (state.isConnecting) cancelConnection();
+  state.isPinching = false;
+  state.panStart = null;
+  state.panLast = null;
+  state.panMoved = false;
+}
+
+// ====================================================================
+// ZOOM INDICATOR
+// ====================================================================
 let zoomTimer = null;
 function showZoomIndicator() {
   zoomIndicator.textContent = Math.round(state.viewport.zoom * 100) + '%';
@@ -673,295 +847,234 @@ function showZoomIndicator() {
   zoomTimer = setTimeout(() => zoomIndicator.classList.remove('show'), 800);
 }
 
-// =================================================================
-//  STICKY NOTES
-// =================================================================
-function addNoteAtClick(e) {
-  const pos = screenToCanvas(e.clientX, e.clientY);
-  createNote(pos.x - 100, pos.y - 80);
+// ====================================================================
+// STICKY NOTES
+// ====================================================================
+function addNoteAtPos(p) {
+  createNote(p.x - 90, p.y - 70);
 }
 
 function createNote(cx, cy, color, text, w, h) {
   const id = generateId('note');
-  const noteColor = color || state.presetNoteColor;
-  const noteW = w || 200;
-  const noteH = h || 160;
-  const noteText = text || '';
+  const nc = color || state.presetNoteColor;
+  const nw = w || (window.innerWidth < 768 ? 180 : 200);
+  const nh = h || (window.innerWidth < 768 ? 140 : 160);
+  const nt = text || '';
 
-  const noteDiv = document.createElement('div');
-  noteDiv.className = 'sticky-note';
-  noteDiv.id = id;
-  noteDiv.style.left = cx + 'px';
-  noteDiv.style.top = cy + 'px';
-  noteDiv.style.width = noteW + 'px';
-  noteDiv.style.minHeight = noteH + 'px';
-  noteDiv.style.backgroundColor = noteColor;
-  noteDiv.style.zIndex = 10 + state.elements.length;
-  noteDiv.dataset.type = 'note';
-  noteDiv.dataset.color = noteColor;
+  const div = document.createElement('div');
+  div.className = 'sticky-note';
+  div.id = id;
+  div.style.left = cx + 'px';
+  div.style.top = cy + 'px';
+  div.style.width = nw + 'px';
+  div.style.minHeight = nh + 'px';
+  div.style.backgroundColor = nc;
+  div.style.zIndex = 10 + state.elements.length;
+  div.dataset.type = 'note';
+  div.dataset.color = nc;
 
-  // Darken header slightly
-  const headerBg = adjustColor(noteColor, -8);
-  noteDiv.innerHTML = `
-    <div class="note-header" style="background:${headerBg};">
+  const hbg = adjustColor(nc, -8);
+  div.innerHTML = `
+    <div class="note-header" style="background:${hbg}">
       <div class="note-colors">
         ${['#FFF9C4','#FFCDD2','#BBDEFB','#C8E6C9','#FFE0B2','#E1BEE7'].map(c =>
-          `<span class="note-color-dot${c === noteColor ? ' active' : ''}" data-color="${c}" style="background:${c};"></span>`
+          `<span class="note-color-dot${c===nc?' active':''}" data-color="${c}" style="background:${c}"></span>`
         ).join('')}
       </div>
-      <button class="note-delete-btn" title="删除">×</button>
+      <button class="note-delete-btn">×</button>
     </div>
-    <div class="note-body" contenteditable="true">${noteText}</div>
+    <div class="note-body" contenteditable="true">${nt}</div>
     <div class="note-resize-handle"></div>
   `;
 
-  // Event delegation
-  noteDiv.querySelector('.note-delete-btn').addEventListener('click', (ev) => {
+  // Event handlers
+  div.querySelector('.note-delete-btn').addEventListener('click', ev => {
     ev.stopPropagation();
     deleteElement(id);
   });
-
-  noteDiv.querySelectorAll('.note-color-dot').forEach(dot => {
-    dot.addEventListener('click', (ev) => {
-      ev.stopPropagation();
-      const newColor = dot.dataset.color;
-      changeNoteColor(id, newColor);
-    });
+  div.querySelector('.note-delete-btn').addEventListener('touchend', ev => {
+    ev.stopPropagation(); ev.preventDefault();
+    deleteElement(id);
   });
 
-  // Double-click to edit (select all text)
-  noteDiv.querySelector('.note-body').addEventListener('dblclick', (ev) => {
+  div.querySelectorAll('.note-color-dot').forEach(dot => {
+    const handler = ev => { ev.stopPropagation(); ev.preventDefault(); changeNoteColor(id, dot.dataset.color); };
+    dot.addEventListener('click', handler);
+    dot.addEventListener('touchend', handler);
+  });
+
+  // Prevent note-body from triggering canvas pan on touch
+  div.querySelector('.note-body').addEventListener('touchstart', ev => {
+    if (state.currentTool === 'select') {
+      selectElementUI(id);
+      clearLongPress();
+    }
     ev.stopPropagation();
-    const body = ev.target;
-    body.focus();
-    const range = document.createRange();
-    range.selectNodeContents(body);
-    const sel = window.getSelection();
-    sel.removeAllRanges();
-    sel.addRange(range);
   });
 
-  // Context menu on note
-  noteDiv.addEventListener('contextmenu', (ev) => {
-    ev.preventDefault();
-    ev.stopPropagation();
-    state.selectedElementId = id;
-    selectElementUI(id);
-    showContextMenu(ev.clientX, ev.clientY);
-  });
-
-  transformLayer.appendChild(noteDiv);
-
-  // Track element
-  state.elements.push({
-    id, type: 'note',
-    el: noteDiv,
-    x: cx, y: cy,
-    w: noteW, h: noteH,
-    color: noteColor
-  });
+  transformLayer.appendChild(div);
+  state.elements.push({ id, type:'note', el:div, x:cx, y:cy, w:nw, h:nh, color:nc });
   state.nextNoteId++;
-
-  // Select the new note
   selectElementUI(id);
   updateMinimap();
 }
 
-function changeNoteColor(id, newColor) {
+function changeNoteColor(id, c) {
   const el = document.getElementById(id);
   if (!el) return;
-  el.style.backgroundColor = newColor;
-  el.dataset.color = newColor;
-  const header = el.querySelector('.note-header');
-  header.style.background = adjustColor(newColor, -8);
-  el.querySelectorAll('.note-color-dot').forEach(d => {
-    d.classList.toggle('active', d.dataset.color === newColor);
-  });
-  // Update element tracking
-  const elem = state.elements.find(e => e.id === id);
-  if (elem) elem.color = newColor;
+  el.style.backgroundColor = c;
+  el.dataset.color = c;
+  el.querySelector('.note-header').style.background = adjustColor(c, -8);
+  el.querySelectorAll('.note-color-dot').forEach(d => d.classList.toggle('active', d.dataset.color===c));
+  const e = state.elements.find(x=>x.id===id);
+  if (e) e.color = c;
   updateMinimap();
 }
 
-function adjustColor(hex, amount) {
-  const num = parseInt(hex.replace('#', ''), 16);
-  const r = Math.min(255, Math.max(0, (num >> 16) + amount));
-  const g = Math.min(255, Math.max(0, ((num >> 8) & 0x00FF) + amount));
-  const b = Math.min(255, Math.max(0, (num & 0x0000FF) + amount));
+function adjustColor(hex, a) {
+  const n = parseInt(hex.replace('#',''),16);
+  const r = Math.min(255,Math.max(0,(n>>16)+a));
+  const g = Math.min(255,Math.max(0,((n>>8)&0xFF)+a));
+  const b = Math.min(255,Math.max(0,(n&0xFF)+a));
   return `rgb(${r},${g},${b})`;
 }
 
-// =================================================================
-//  ELEMENT DRAG
-// =================================================================
-function startDragElement(e, el) {
+// ====================================================================
+// ELEMENT DRAG
+// ====================================================================
+function startDragElement(p, el) {
   if (state.currentTool !== 'select') return;
   state.isDraggingElement = true;
   state.dragTarget = el;
-  const pos = screenToCanvas(e.clientX, e.clientY);
-  const elLeft = parseFloat(el.style.left);
-  const elTop = parseFloat(el.style.top);
-  state.dragOffset = { x: pos.x - elLeft, y: pos.y - elTop };
+  const cp = screenToCanvas(p.x, p.y);
+  state.dragOffset = { x: cp.x - parseFloat(el.style.left), y: cp.y - parseFloat(el.style.top) };
   selectElementUI(el.id);
   el.style.zIndex = 999;
-  canvasContainer.style.cursor = 'grabbing';
 }
 
-function updateDragElement(e) {
+function updateDragElement(p) {
   if (!state.dragTarget) return;
-  const pos = screenToCanvas(e.clientX, e.clientY);
-  const nx = pos.x - state.dragOffset.x;
-  const ny = pos.y - state.dragOffset.y;
+  const cp = screenToCanvas(p.x, p.y);
+  const nx = cp.x - state.dragOffset.x;
+  const ny = cp.y - state.dragOffset.y;
   state.dragTarget.style.left = nx + 'px';
   state.dragTarget.style.top = ny + 'px';
-  // Update element data
-  const elem = state.elements.find(el => el.id === state.dragTarget.id);
-  if (elem) { elem.x = nx; elem.y = ny; }
+  const e = state.elements.find(x=>x.id===state.dragTarget.id);
+  if (e) { e.x = nx; e.y = ny; }
   updateConnectionLines();
   updateMinimap();
 }
 
 function endDragElement() {
   if (state.dragTarget) {
-    state.dragTarget.style.zIndex = 10 + state.elements.findIndex(e => e.id === state.dragTarget.id);
+    state.dragTarget.style.zIndex = 10 + state.elements.findIndex(x=>x.id===state.dragTarget.id);
   }
   state.isDraggingElement = false;
   state.dragTarget = null;
-  updateCursor();
   updateMinimap();
 }
 
-// =================================================================
-//  ELEMENT RESIZE
-// =================================================================
-function startResize(e, el) {
-  state.isResizing = true;
-  state.resizeTarget = el;
-  const pos = screenToCanvas(e.clientX, e.clientY);
-  state.resizeStart = {
-    x: pos.x, y: pos.y,
-    w: parseFloat(el.style.width),
-    h: parseFloat(el.style.minHeight)
-  };
-  canvasContainer.style.cursor = 'nwse-resize';
-}
-
-function updateResize(e) {
+// ====================================================================
+// RESIZE
+// ====================================================================
+function updateResize(p) {
   if (!state.resizeTarget) return;
-  const pos = screenToCanvas(e.clientX, e.clientY);
-  const dw = pos.x - state.resizeStart.x;
-  const dh = pos.y - state.resizeStart.y;
-  const nw = Math.max(120, state.resizeStart.w + dw);
-  const nh = Math.max(80, state.resizeStart.h + dh);
+  const cp = screenToCanvas(p.x, p.y);
+  const dw = cp.x - state.resizeStart.x;
+  const dh = cp.y - state.resizeStart.y;
+  const nw = Math.max(100, state.resizeStart.w + dw);
+  const nh = Math.max(70, state.resizeStart.h + dh);
   state.resizeTarget.style.width = nw + 'px';
   state.resizeTarget.style.minHeight = nh + 'px';
-  const elem = state.elements.find(el => el.id === state.resizeTarget.id);
-  if (elem) { elem.w = nw; elem.h = nh; }
+  const e = state.elements.find(x=>x.id===state.resizeTarget.id);
+  if (e) { e.w = nw; e.h = nh; }
 }
 
 function endResize() {
   state.isResizing = false;
   state.resizeTarget = null;
-  updateCursor();
   updateMinimap();
 }
 
-// =================================================================
-//  FREE DRAWING (PEN)
-// =================================================================
+// ====================================================================
+// DRAWING (PEN)
+// ====================================================================
 function startDrawing(e) {
   state.isDrawing = true;
   state.currentPathPoints = [];
-  const pos = screenToCanvas(e.clientX, e.clientY);
-  state.currentPathPoints.push(pos);
+  const p = posFromEvent(e);
+  const cp = screenToCanvas(p.x, p.y);
+  state.currentPathPoints.push(cp);
 
-  // Create path element
-  const pathId = generateId('path');
-  const pathEl = document.createElementNS('http://www.w3.org/2000/svg', 'path');
-  pathEl.setAttribute('id', pathId);
-  pathEl.setAttribute('fill', 'none');
-  pathEl.setAttribute('stroke', state.penColor);
-  pathEl.setAttribute('stroke-width', state.penThickness);
-  pathEl.setAttribute('stroke-linecap', 'round');
-  pathEl.setAttribute('stroke-linejoin', 'round');
-  pathEl.style.pointerEvents = 'stroke';
-  pathEl.style.cursor = 'pointer';
-  pathEl.dataset.type = 'path';
-  pathEl.dataset.color = state.penColor;
-  pathEl.dataset.thickness = state.penThickness;
+  const pid = generateId('path');
+  const pEl = document.createElementNS('http://www.w3.org/2000/svg','path');
+  pEl.setAttribute('id',pid);
+  pEl.setAttribute('fill','none');
+  pEl.setAttribute('stroke',state.penColor);
+  pEl.setAttribute('stroke-width',state.penThickness);
+  pEl.setAttribute('stroke-linecap','round');
+  pEl.setAttribute('stroke-linejoin','round');
+  pEl.style.pointerEvents = 'stroke';
+  pEl.style.cursor = 'pointer';
+  pEl.dataset.type = 'path';
+  pEl.dataset.color = state.penColor;
+  pEl.dataset.thickness = state.penThickness;
 
-  drawingSvg.appendChild(pathEl);
-  state.currentPathElement = pathEl;
-
-  state.elements.push({
-    id: pathId,
-    type: 'path',
-    el: pathEl,
-    points: [pos],
-    color: state.penColor,
-    thickness: state.penThickness
-  });
+  drawingSvg.appendChild(pEl);
+  state.currentPathElement = pEl;
+  state.elements.push({ id:pid, type:'path', el:pEl, points:[cp], color:state.penColor, thickness:state.penThickness });
 }
 
 function updateDrawing(e) {
   if (!state.isDrawing || !state.currentPathElement) return;
-  const pos = screenToCanvas(e.clientX, e.clientY);
-  state.currentPathPoints.push(pos);
+  const p = posFromEvent(e);
+  const cp = screenToCanvas(p.x, p.y);
+  state.currentPathPoints.push(cp);
 
-  // Build SVG path data
   let d = '';
   for (let i = 0; i < state.currentPathPoints.length; i++) {
-    const p = state.currentPathPoints[i];
-    d += (i === 0 ? 'M' : 'L') + `${p.x} ${p.y} `;
+    const pt = state.currentPathPoints[i];
+    d += (i===0?'M':'L') + `${pt.x} ${pt.y} `;
   }
   state.currentPathElement.setAttribute('d', d);
-
-  // Update element tracking
-  const elem = state.elements.find(el => el.id === state.currentPathElement.id);
-  if (elem) elem.points = [...state.currentPathPoints];
+  const el = state.elements.find(x=>x.id===state.currentPathElement.id);
+  if (el) el.points = [...state.currentPathPoints];
 }
 
 function endDrawing() {
   if (!state.isDrawing) return;
   state.isDrawing = false;
-
-  // Simplify path (remove if too short)
   if (state.currentPathPoints.length < 2 && state.currentPathElement) {
     state.currentPathElement.remove();
-    state.elements = state.elements.filter(el => el.id !== state.currentPathElement.id);
+    state.elements = state.elements.filter(x=>x.id!==state.currentPathElement.id);
   }
-
   state.currentPathPoints = [];
   state.currentPathElement = null;
   updateMinimap();
 }
 
-// =================================================================
-//  CONNECTION TOOL
-// =================================================================
+// ====================================================================
+// CONNECTION
+// ====================================================================
 function startConnection(e) {
-  // Check if we're near a note
-  const pos = screenToCanvas(e.clientX, e.clientY);
-  const nearNote = findNearbyNote(pos);
-  if (nearNote) {
+  const p = posFromEvent(e);
+  const cp = screenToCanvas(p.x, p.y);
+  const nn = findNearbyNote(cp);
+  if (nn) {
     state.isConnecting = true;
-    state.connectSource = nearNote;
-
-    // Create temporary line
-    const lineId = generateId('conn-temp');
-    const line = document.createElementNS('http://www.w3.org/2000/svg', 'line');
-    line.setAttribute('id', lineId);
-    line.setAttribute('stroke', state.connectionColor);
-    line.setAttribute('stroke-width', '2');
-    line.setAttribute('stroke-dasharray', '6 3');
+    state.connectSource = nn;
+    const lid = generateId('conn-tmp');
+    const line = document.createElementNS('http://www.w3.org/2000/svg','line');
+    line.setAttribute('id',lid);
+    line.setAttribute('stroke',state.connectionColor);
+    line.setAttribute('stroke-width','2');
+    line.setAttribute('stroke-dasharray','6 3');
     line.style.pointerEvents = 'none';
-
-    const sc = getElementCenter(nearNote.id);
-    line.setAttribute('x1', sc.x);
-    line.setAttribute('y1', sc.y);
-    line.setAttribute('x2', pos.x);
-    line.setAttribute('y2', pos.y);
-
+    const sc = getElementCenter(nn.id);
+    line.setAttribute('x1',sc.x);
+    line.setAttribute('y1',sc.y);
+    line.setAttribute('x2',cp.x);
+    line.setAttribute('y2',cp.y);
     drawingSvg.appendChild(line);
     state.connectLine = line;
   }
@@ -969,30 +1082,25 @@ function startConnection(e) {
 
 function updateConnection(e) {
   if (!state.isConnecting || !state.connectLine) return;
-  const pos = screenToCanvas(e.clientX, e.clientY);
-  state.connectLine.setAttribute('x2', pos.x);
-  state.connectLine.setAttribute('y2', pos.y);
+  const p = posFromEvent(e);
+  const cp = screenToCanvas(p.x, p.y);
+  state.connectLine.setAttribute('x2',cp.x);
+  state.connectLine.setAttribute('y2',cp.y);
 }
 
 function endConnection(e) {
   if (!state.isConnecting) { cancelConnection(); return; }
-
-  const pos = screenToCanvas(e.clientX, e.clientY);
-  const nearNote = findNearbyNote(pos);
-
-  if (nearNote && nearNote.id !== state.connectSource.id) {
-    // Create permanent connection
-    createConnection(state.connectSource.id, nearNote.id);
+  const p = posFromEvent(e);
+  const cp = screenToCanvas(p.x, p.y);
+  const nn = findNearbyNote(cp);
+  if (nn && nn.id !== state.connectSource.id) {
+    createConnection(state.connectSource.id, nn.id);
   }
-
   cancelConnection();
 }
 
 function cancelConnection() {
-  if (state.connectLine) {
-    state.connectLine.remove();
-    state.connectLine = null;
-  }
+  if (state.connectLine) { state.connectLine.remove(); state.connectLine = null; }
   state.isConnecting = false;
   state.connectSource = null;
 }
@@ -1001,126 +1109,87 @@ function findNearbyNote(pos) {
   for (let i = state.elements.length - 1; i >= 0; i--) {
     const el = state.elements[i];
     if (el.type !== 'note') continue;
-    const cx = el.x + el.w / 2;
-    const cy = el.y + el.h / 2;
-    const dist = Math.sqrt((pos.x - cx) ** 2 + (pos.y - cy) ** 2);
-    if (dist < Math.max(el.w, el.h) * 0.6) return el;
+    const cx = el.x + el.w/2, cy = el.y + el.h/2;
+    if (Math.hypot(pos.x-cx, pos.y-cy) < Math.max(el.w,el.h)*0.6) return el;
   }
   return null;
 }
 
 function getElementCenter(id) {
-  const el = state.elements.find(e => e.id === id);
-  if (!el) return { x: 0, y: 0 };
-  if (el.type === 'note') {
-    return { x: el.x + el.w / 2, y: el.y + el.h / 2 };
-  }
-  return { x: el.x || 0, y: el.y || 0 };
+  const el = state.elements.find(x=>x.id===id);
+  if (!el) return {x:0,y:0};
+  if (el.type==='note') return {x:el.x+el.w/2, y:el.y+el.h/2};
+  return {x:el.x||0, y:el.y||0};
 }
 
 function createConnection(fromId, toId) {
-  // Check if connection already exists
   const exists = state.elements.some(el =>
-    el.type === 'connection' &&
-    ((el.from === fromId && el.to === toId) || (el.from === toId && el.to === fromId))
+    el.type==='connection' && ((el.from===fromId&&el.to===toId)||(el.from===toId&&el.to===fromId))
   );
   if (exists) return;
 
-  const connId = generateId('conn');
+  const cid = generateId('conn');
   const from = getElementCenter(fromId);
   const to = getElementCenter(toId);
 
-  const line = document.createElementNS('http://www.w3.org/2000/svg', 'line');
-  line.setAttribute('id', connId);
-  line.setAttribute('x1', from.x);
-  line.setAttribute('y1', from.y);
-  line.setAttribute('x2', to.x);
-  line.setAttribute('y2', to.y);
-  line.setAttribute('stroke', state.connectionColor);
-  line.setAttribute('stroke-width', '2');
-  line.setAttribute('stroke-linecap', 'round');
+  const line = document.createElementNS('http://www.w3.org/2000/svg','line');
+  line.setAttribute('id',cid);
+  line.setAttribute('x1',from.x); line.setAttribute('y1',from.y);
+  line.setAttribute('x2',to.x); line.setAttribute('y2',to.y);
+  line.setAttribute('stroke',state.connectionColor);
+  line.setAttribute('stroke-width','2');
+  line.setAttribute('stroke-linecap','round');
   line.classList.add('connection-line');
   line.dataset.type = 'connection';
-  line.dataset.from = fromId;
-  line.dataset.to = toId;
-
-  // Add arrow marker or dots
+  line.dataset.from = fromId; line.dataset.to = toId;
   line.style.pointerEvents = 'stroke';
   line.style.cursor = 'pointer';
-
   drawingSvg.appendChild(line);
 
-  state.elements.push({
-    id: connId,
-    type: 'connection',
-    el: line,
-    from: fromId,
-    to: toId,
-    color: state.connectionColor
-  });
-
-  // Click on connection to select it
-  line.addEventListener('click', (ev) => {
-    ev.stopPropagation();
-    selectConnection(line);
-  });
-
-  line.addEventListener('contextmenu', (ev) => {
-    ev.preventDefault();
-    ev.stopPropagation();
-    selectConnection(line);
-    showContextMenu(ev.clientX, ev.clientY);
-  });
-
+  state.elements.push({ id:cid, type:'connection', el:line, from:fromId, to:toId, color:state.connectionColor });
   updateMinimap();
 }
 
 function selectConnection(line) {
-  // Deselect all first
   deselectAll();
   state.selectedElementId = line.id;
-  line.setAttribute('stroke-width', '3');
-  line.setAttribute('stroke', '#6366f1');
   line.dataset.originalStroke = line.getAttribute('stroke');
   line.dataset.originalWidth = line.getAttribute('stroke-width');
+  line.setAttribute('stroke','#6366f1');
+  line.setAttribute('stroke-width','3');
 }
 
 function updateConnectionLines() {
   state.elements.forEach(el => {
-    if (el.type === 'connection') {
-      const from = getElementCenter(el.from);
-      const to = getElementCenter(el.to);
-      el.el.setAttribute('x1', from.x);
-      el.el.setAttribute('y1', from.y);
-      el.el.setAttribute('x2', to.x);
-      el.el.setAttribute('y2', to.y);
+    if (el.type==='connection') {
+      const f = getElementCenter(el.from);
+      const t = getElementCenter(el.to);
+      el.el.setAttribute('x1',f.x); el.el.setAttribute('y1',f.y);
+      el.el.setAttribute('x2',t.x); el.el.setAttribute('y2',t.y);
     }
   });
 }
 
-// =================================================================
-//  SELECTION
-// =================================================================
+// ====================================================================
+// SELECTION
+// ====================================================================
 function selectElementUI(id) {
-  // Deselect previous
   deselectAll();
-
   state.selectedElementId = id;
   const el = document.getElementById(id);
   if (!el) return;
-
   if (el.classList.contains('sticky-note')) {
     el.classList.add('selected');
   } else if (el.classList.contains('connection-line')) {
     el.dataset.originalStroke = el.getAttribute('stroke');
     el.dataset.originalWidth = el.getAttribute('stroke-width');
-    el.setAttribute('stroke', '#6366f1');
-    el.setAttribute('stroke-width', '3');
-  } else if (el.tagName === 'path') {
+    el.setAttribute('stroke','#6366f1');
+    el.setAttribute('stroke-width','3');
+  } else if (el.tagName==='path') {
     el.dataset.originalStroke = el.getAttribute('stroke');
     el.dataset.originalWidth = el.getAttribute('stroke-width');
-    el.setAttribute('stroke', '#6366f1');
-    el.setAttribute('stroke-width', String(parseInt(el.dataset.thickness || 2) + 2));
+    el.setAttribute('stroke','#6366f1');
+    el.setAttribute('stroke-width',String(parseInt(el.dataset.thickness||2)+2));
   }
 }
 
@@ -1130,419 +1199,308 @@ function deselectAll() {
     if (prev) {
       prev.classList.remove('selected');
       if (prev.dataset.originalStroke) {
-        prev.setAttribute('stroke', prev.dataset.originalStroke);
-        prev.setAttribute('stroke-width', prev.dataset.originalWidth);
+        prev.setAttribute('stroke',prev.dataset.originalStroke);
+        prev.setAttribute('stroke-width',prev.dataset.originalWidth);
       }
     }
   }
   state.selectedElementId = null;
 }
 
-// Click on empty canvas to deselect
-canvasContainer.addEventListener('click', (e) => {
-  if (e.target === canvasContainer && state.currentTool === 'select') {
-    deselectAll();
-  }
-});
-
-// =================================================================
-//  DELETE ELEMENT
-// =================================================================
+// ====================================================================
+// DELETE & DUPLICATE
+// ====================================================================
 function deleteElement(id) {
   const el = document.getElementById(id);
   if (!el) return;
-
-  // Remove connected connections
-  state.elements = state.elements.filter(elem => {
-    if (elem.type === 'connection' && (elem.from === id || elem.to === id)) {
-      if (elem.el) elem.el.remove();
-      return false;
-    }
+  state.elements = state.elements.filter(e => {
+    if (e.type==='connection' && (e.from===id||e.to===id)) { if(e.el)e.el.remove(); return false; }
     return true;
   });
-
-  // Remove element
   el.remove();
-  state.elements = state.elements.filter(e => e.id !== id);
-
-  if (state.selectedElementId === id) {
-    state.selectedElementId = null;
-  }
+  state.elements = state.elements.filter(e=>e.id!==id);
+  if (state.selectedElementId===id) state.selectedElementId = null;
   updateMinimap();
 }
 
 function duplicateElement(id) {
-  const elem = state.elements.find(e => e.id === id);
-  if (!elem || elem.type !== 'note') return;
-
-  createNote(
-    elem.x + 30, elem.y + 30,
-    elem.color,
-    elem.el.querySelector('.note-body')?.innerText || '',
-    elem.w, elem.h
-  );
+  const e = state.elements.find(x=>x.id===id);
+  if (!e || e.type!=='note') return;
+  createNote(e.x+30, e.y+30, e.color, e.el.querySelector('.note-body')?.innerText||'', e.w, e.h);
 }
 
-// =================================================================
-//  CONTEXT MENU
-// =================================================================
-function showContextMenu(x, y) {
-  contextMenu.style.left = x + 'px';
-  contextMenu.style.top = y + 'px';
+// ====================================================================
+// CONTEXT MENU (bottom sheet for mobile)
+// ====================================================================
+function showContextMenu() {
   contextMenu.classList.add('show');
+  contextMenuBackdrop.classList.add('show');
 }
 
 function hideContextMenu() {
   contextMenu.classList.remove('show');
+  contextMenuBackdrop.classList.remove('show');
 }
 
-document.addEventListener('click', (e) => {
-  if (!e.target.closest('.context-menu')) {
-    hideContextMenu();
-  }
-});
+contextMenuBackdrop.addEventListener('click', hideContextMenu);
+contextMenuBackdrop.addEventListener('touchend', ev => { ev.preventDefault(); hideContextMenu(); });
 
 contextMenu.querySelectorAll('.context-menu-item').forEach(item => {
-  item.addEventListener('click', () => {
+  const handler = () => {
     const action = item.dataset.action;
     const id = state.selectedElementId;
     if (!id) return;
-    if (action === 'delete') deleteElement(id);
-    if (action === 'duplicate') duplicateElement(id);
-    if (action === 'bringToFront') {
-      const el = document.getElementById(id);
-      if (el) el.style.zIndex = 9999;
-    }
-    if (action === 'sendToBack') {
-      const el = document.getElementById(id);
-      if (el) el.style.zIndex = 1;
-    }
+    if (action==='delete') deleteElement(id);
+    if (action==='duplicate') duplicateElement(id);
+    if (action==='bringToFront') { const el=document.getElementById(id); if(el)el.style.zIndex=9999; }
+    if (action==='sendToBack') { const el=document.getElementById(id); if(el)el.style.zIndex=1; }
     hideContextMenu();
-  });
+  };
+  item.addEventListener('click', handler);
+  item.addEventListener('touchend', ev => { ev.preventDefault(); handler(); });
 });
 
-// =================================================================
-//  TOOL SWITCHING
-// =================================================================
+// ====================================================================
+// TOOL SWITCHING
+// ====================================================================
 const toolButtons = document.querySelectorAll('.tool-btn[data-tool]');
-const penSettings = document.getElementById('pen-settings');
-const noteSettings = document.getElementById('note-settings');
-const connectSettings = document.getElementById('connect-settings');
+const penSettings = document.querySelector('.pen-settings');
+const noteSettings = document.querySelector('.note-settings');
+const connectSettings = document.querySelector('.connect-settings');
 
 function switchTool(tool) {
   state.currentTool = tool;
   deselectAll();
+  clearLongPress();
+  cancelConnection();
 
-  toolButtons.forEach(btn => btn.classList.remove('active'));
-  const activeBtn = document.querySelector(`.tool-btn[data-tool="${tool}"]`);
-  if (activeBtn) activeBtn.classList.add('active');
+  toolButtons.forEach(b => b.classList.remove('active'));
+  const ab = document.querySelector(`.tool-btn[data-tool="${tool}"]`);
+  if (ab) ab.classList.add('active');
 
-  // Show/hide tool settings
-  penSettings.style.display = tool === 'pen' ? 'flex' : 'none';
-  noteSettings.style.display = tool === 'note' ? 'flex' : 'none';
-  connectSettings.style.display = tool === 'connection' ? 'flex' : 'none';
-
-  updateCursor();
-}
-
-function updateCursor() {
-  canvasContainer.classList.remove('pen-tool', 'note-tool', 'connect-tool');
-  if (state.currentTool === 'pen') canvasContainer.classList.add('pen-tool');
-  if (state.currentTool === 'note') canvasContainer.classList.add('note-tool');
-  if (state.currentTool === 'connection') canvasContainer.classList.add('connect-tool');
-  if (state.currentTool === 'select') canvasContainer.style.cursor = 'grab';
+  penSettings.style.display = tool==='pen' ? 'flex' : 'none';
+  noteSettings.style.display = tool==='note' ? 'flex' : 'none';
+  connectSettings.style.display = tool==='connection' ? 'flex' : 'none';
 }
 
 toolButtons.forEach(btn => {
-  btn.addEventListener('click', () => switchTool(btn.dataset.tool));
+  const handler = () => switchTool(btn.dataset.tool);
+  btn.addEventListener('click', handler);
+  btn.addEventListener('touchend', ev => { ev.preventDefault(); handler(); });
 });
 
-// Pen color swatches
-document.querySelectorAll('#pen-settings .color-swatch').forEach(sw => {
-  sw.addEventListener('click', (e) => {
-    e.stopPropagation();
-    document.querySelectorAll('#pen-settings .color-swatch').forEach(s => s.classList.remove('active'));
+// Pen color
+document.querySelectorAll('.pen-settings .color-swatch').forEach(sw => {
+  const h = () => {
+    document.querySelectorAll('.pen-settings .color-swatch').forEach(s=>s.classList.remove('active'));
     sw.classList.add('active');
     state.penColor = sw.dataset.penColor;
-  });
+  };
+  sw.addEventListener('click',h);
+  sw.addEventListener('touchend',ev=>{ev.preventDefault();h();});
 });
 
-// Pen thickness buttons
-document.querySelectorAll('#pen-settings .thickness-btn').forEach(btn => {
-  btn.addEventListener('click', (e) => {
-    e.stopPropagation();
-    document.querySelectorAll('#pen-settings .thickness-btn').forEach(b => b.classList.remove('active'));
+// Pen thickness
+document.querySelectorAll('.pen-settings .thickness-btn').forEach(btn => {
+  const h = () => {
+    document.querySelectorAll('.pen-settings .thickness-btn').forEach(b=>b.classList.remove('active'));
     btn.classList.add('active');
     state.penThickness = parseInt(btn.dataset.thickness);
-  });
+  };
+  btn.addEventListener('click',h);
+  btn.addEventListener('touchend',ev=>{ev.preventDefault();h();});
 });
 
-// Note preset colors
-document.querySelectorAll('#note-settings .color-swatch').forEach(sw => {
-  sw.addEventListener('click', (e) => {
-    e.stopPropagation();
-    document.querySelectorAll('#note-settings .color-swatch').forEach(s => s.classList.remove('active'));
+// Note preset
+document.querySelectorAll('.note-settings .color-swatch').forEach(sw => {
+  const h = () => {
+    document.querySelectorAll('.note-settings .color-swatch').forEach(s=>s.classList.remove('active'));
     sw.classList.add('active');
     state.presetNoteColor = sw.dataset.presetColor;
-  });
+  };
+  sw.addEventListener('click',h);
+  sw.addEventListener('touchend',ev=>{ev.preventDefault();h();});
 });
 
-// Connection colors
-document.querySelectorAll('#connect-settings .color-swatch').forEach(sw => {
-  sw.addEventListener('click', (e) => {
-    e.stopPropagation();
-    document.querySelectorAll('#connect-settings .color-swatch').forEach(s => s.classList.remove('active'));
+// Connection color
+document.querySelectorAll('.connect-settings .color-swatch').forEach(sw => {
+  const h = () => {
+    document.querySelectorAll('.connect-settings .color-swatch').forEach(s=>s.classList.remove('active'));
     sw.classList.add('active');
     state.connectionColor = sw.dataset.connColor;
-  });
+  };
+  sw.addEventListener('click',h);
+  sw.addEventListener('touchend',ev=>{ev.preventDefault();h();});
 });
 
-// Clear canvas
+// Clear
 document.getElementById('btn-clear').addEventListener('click', () => {
-  if (state.elements.length === 0) return;
-  if (confirm('确定要清空画布上的所有内容吗？此操作不可撤销。')) {
-    state.elements.forEach(el => { if (el.el) el.el.remove(); });
+  if (state.elements.length===0) return;
+  if (confirm('清空画布？此操作不可撤销。')) {
+    state.elements.forEach(e=>{if(e.el)e.el.remove()});
     state.elements = [];
     state.selectedElementId = null;
     updateMinimap();
   }
 });
 
-// Fit to view
-document.getElementById('btn-fit').addEventListener('click', fitToView);
-
-function fitToView() {
-  state.viewport = { x: 0, y: 0, zoom: 1 };
+// Fit
+document.getElementById('btn-fit').addEventListener('click', () => {
+  state.viewport = { x:0, y:0, zoom:1 };
   updateTransform();
   showZoomIndicator();
-}
+});
 
-// =================================================================
-//  KEYBOARD SHORTCUTS
-// =================================================================
-document.addEventListener('keydown', (e) => {
-  // Don't trigger shortcuts when editing text
-  if (e.target.contentEditable === 'true' || e.target.tagName === 'INPUT' || e.target.tagName === 'TEXTAREA') return;
-
-  switch (e.key.toLowerCase()) {
+// ====================================================================
+// KEYBOARD (desktop only)
+// ====================================================================
+document.addEventListener('keydown', e => {
+  if (e.target.contentEditable==='true' || e.target.tagName==='INPUT'||e.target.tagName==='TEXTAREA') return;
+  switch(e.key.toLowerCase()){
     case 'v': switchTool('select'); break;
     case 'n': switchTool('note'); break;
     case 'p': switchTool('pen'); break;
     case 'c': switchTool('connection'); break;
-    case '0': fitToView(); break;
-    case 'delete':
-    case 'backspace':
-      if (state.selectedElementId) {
-        deleteElement(state.selectedElementId);
-      }
-      break;
-    case 'escape':
-      deselectAll();
-      if (state.isConnecting) cancelConnection();
-      break;
-    case '+':
-    case '=':
-      e.preventDefault();
-      state.viewport.zoom = Math.min(5, state.viewport.zoom * 1.1);
-      updateTransform();
-      showZoomIndicator();
-      break;
-    case '-':
-      e.preventDefault();
-      state.viewport.zoom = Math.max(0.1, state.viewport.zoom / 1.1);
-      updateTransform();
-      showZoomIndicator();
-      break;
+    case '0': state.viewport={x:0,y:0,zoom:1};updateTransform();showZoomIndicator();break;
+    case 'delete':case 'backspace':
+      if(state.selectedElementId)deleteElement(state.selectedElementId);break;
+    case 'escape':deselectAll();cancelConnection();break;
+    case '+':case '=':e.preventDefault();
+      state.viewport.zoom=Math.min(5,state.viewport.zoom*1.1);updateTransform();showZoomIndicator();break;
+    case '-':e.preventDefault();
+      state.viewport.zoom=Math.max(.1,state.viewport.zoom/1.1);updateTransform();showZoomIndicator();break;
   }
 });
 
-// =================================================================
-//  MINIMAP
-// =================================================================
+// ====================================================================
+// MINIMAP
+// ====================================================================
 function updateMinimap() {
-  const canvas = minimapCanvas;
-  const container = minimapContainer;
-  const w = container.clientWidth;
-  const h = container.clientHeight;
+  const c = minimapCanvas;
+  const ct = minimapContainer;
+  const w = ct.clientWidth, h = ct.clientHeight;
+  c.width = w * (window.devicePixelRatio||1);
+  c.height = h * (window.devicePixelRatio||1);
+  c.style.width = w+'px';
+  c.style.height = h+'px';
+  const ctx = c.getContext('2d');
+  ctx.scale(window.devicePixelRatio||1,window.devicePixelRatio||1);
 
-  // Set canvas resolution
-  canvas.width = w * (window.devicePixelRatio || 1);
-  canvas.height = h * (window.devicePixelRatio || 1);
-  canvas.style.width = w + 'px';
-  canvas.style.height = h + 'px';
+  ctx.fillStyle='#fafafa';ctx.fillRect(0,0,w,h);
+  ctx.strokeStyle='#e0e0e0';ctx.lineWidth=.5;
+  for(let x=0;x<w;x+=8){ctx.beginPath();ctx.moveTo(x,0);ctx.lineTo(x,h);ctx.stroke()}
+  for(let y=0;y<h;y+=8){ctx.beginPath();ctx.moveTo(0,y);ctx.lineTo(w,y);ctx.stroke()}
 
-  const ctx = canvas.getContext('2d');
-  ctx.scale(window.devicePixelRatio || 1, window.devicePixelRatio || 1);
+  let minX=Infinity,minY=Infinity,maxX=-Infinity,maxY=-Infinity;
+  state.elements.forEach(el=>{
+    if(el.type==='note'){ minX=Math.min(minX,el.x);minY=Math.min(minY,el.y);maxX=Math.max(maxX,el.x+el.w);maxY=Math.max(maxY,el.y+el.h)}
+    else if(el.type==='path'&&el.points)el.points.forEach(p=>{minX=Math.min(minX,p.x);minY=Math.min(minY,p.y);maxX=Math.max(maxX,p.x);maxY=Math.max(maxY,p.y)})
+  });
+  if(!isFinite(minX)){minX=-500;minY=-400;maxX=500;maxY=400}
+  const px=(maxX-minX)*.2||200;const py=(maxY-minY)*.2||200;
+  minX-=px;minY-=py;maxX+=px;maxY+=py;
+  const bw=maxX-minX,bh=maxY-minY;
+  const s=Math.min(w/bw,h/bh);
+  const tx=cx=>(cx-minX)*s, ty=cy=>(cy-minY)*s, tsz=sz=>sz*s;
 
-  // Background
-  ctx.fillStyle = '#fafafa';
-  ctx.fillRect(0, 0, w, h);
-
-  // Light grid
-  ctx.strokeStyle = '#e0e0e0';
-  ctx.lineWidth = 0.5;
-  const gs = 10;
-  for (let x = 0; x < w; x += gs) {
-    ctx.beginPath(); ctx.moveTo(x, 0); ctx.lineTo(x, h); ctx.stroke();
-  }
-  for (let y = 0; y < h; y += gs) {
-    ctx.beginPath(); ctx.moveTo(0, y); ctx.lineTo(w, y); ctx.stroke();
-  }
-
-  // Calculate bounds of all elements to determine minimap scale
-  let minX = Infinity, minY = Infinity, maxX = -Infinity, maxY = -Infinity;
-  state.elements.forEach(el => {
-    if (el.type === 'note') {
-      minX = Math.min(minX, el.x); minY = Math.min(minY, el.y);
-      maxX = Math.max(maxX, el.x + el.w); maxY = Math.max(maxY, el.y + el.h);
-    } else if (el.type === 'path' && el.points) {
-      el.points.forEach(p => {
-        minX = Math.min(minX, p.x); minY = Math.min(minY, p.y);
-        maxX = Math.max(maxX, p.x); maxY = Math.max(maxY, p.y);
-      });
+  state.elements.forEach(el=>{
+    if(el.type==='note'){
+      ctx.fillStyle=el.color||'#FFF9C4';ctx.fillRect(tx(el.x),ty(el.y),tsz(el.w),tsz(el.h));
+      ctx.strokeStyle='rgba(0,0,0,.2)';ctx.lineWidth=1;ctx.strokeRect(tx(el.x),ty(el.y),tsz(el.w),tsz(el.h));
+    }else if(el.type==='path'&&el.points&&el.points.length>1){
+      ctx.strokeStyle=el.color||'#000';ctx.lineWidth=Math.max(1,tsz(el.thickness||2));
+      ctx.beginPath();ctx.moveTo(tx(el.points[0].x),ty(el.points[0].y));
+      for(let i=1;i<el.points.length;i++)ctx.lineTo(tx(el.points[i].x),ty(el.points[i].y));
+      ctx.stroke();
+    }else if(el.type==='connection'){
+      const f=getElementCenter(el.from),t=getElementCenter(el.to);
+      ctx.strokeStyle=el.color||'#6366f1';ctx.lineWidth=1.5;
+      ctx.beginPath();ctx.moveTo(tx(f.x),ty(f.y));ctx.lineTo(tx(t.x),ty(t.y));ctx.stroke();
     }
   });
 
-  // Default bounds if empty
-  if (!isFinite(minX)) { minX = -500; minY = -400; maxX = 500; maxY = 400; }
-
-  // Add padding
-  const padX = (maxX - minX) * 0.2 || 200;
-  const padY = (maxY - minY) * 0.2 || 200;
-  minX -= padX; minY -= padY; maxX += padX; maxY += padY;
-
-  const boundW = maxX - minX;
-  const boundH = maxY - minY;
-  const scale = Math.min(w / boundW, h / boundH);
-
-  function tx(cx) { return (cx - minX) * scale; }
-  function ty(cy) { return (cy - minY) * scale; }
-  function tsz(s) { return s * scale; }
-
-  // Draw elements
-  state.elements.forEach(el => {
-    if (el.type === 'note') {
-      ctx.fillStyle = el.color || '#FFF9C4';
-      ctx.fillRect(tx(el.x), ty(el.y), tsz(el.w), tsz(el.h));
-      ctx.strokeStyle = 'rgba(0,0,0,0.2)';
-      ctx.lineWidth = 1;
-      ctx.strokeRect(tx(el.x), ty(el.y), tsz(el.w), tsz(el.h));
-    } else if (el.type === 'path' && el.points && el.points.length > 1) {
-      ctx.strokeStyle = el.color || '#000';
-      ctx.lineWidth = Math.max(1, tsz(el.thickness || 2));
-      ctx.beginPath();
-      ctx.moveTo(tx(el.points[0].x), ty(el.points[0].y));
-      for (let i = 1; i < el.points.length; i++) {
-        ctx.lineTo(tx(el.points[i].x), ty(el.points[i].y));
-      }
-      ctx.stroke();
-    } else if (el.type === 'connection') {
-      const from = getElementCenter(el.from);
-      const to = getElementCenter(el.to);
-      ctx.strokeStyle = el.color || '#6366f1';
-      ctx.lineWidth = 1.5;
-      ctx.beginPath();
-      ctx.moveTo(tx(from.x), ty(from.y));
-      ctx.lineTo(tx(to.x), ty(to.y));
-      ctx.stroke();
-    }
-  });
-
-  // Viewport indicator
-  const rect = canvasContainer.getBoundingClientRect();
-  const vw = rect.width / state.viewport.zoom;
-  const vh = rect.height / state.viewport.zoom;
-  const vx = -state.viewport.x / state.viewport.zoom;
-  const vy = -state.viewport.y / state.viewport.zoom;
-
-  ctx.strokeStyle = '#6366f1';
-  ctx.lineWidth = 2;
-  ctx.fillStyle = 'rgba(99, 102, 241, 0.08)';
-  ctx.fillRect(tx(vx), ty(vy), tsz(vw), tsz(vh));
-  ctx.strokeRect(tx(vx), ty(vy), tsz(vw), tsz(vh));
+  const cr=canvasContainer.getBoundingClientRect();
+  const vw=cr.width/state.viewport.zoom,vh=cr.height/state.viewport.zoom;
+  const vx=-state.viewport.x/state.viewport.zoom,vy=-state.viewport.y/state.viewport.zoom;
+  ctx.strokeStyle='#6366f1';ctx.lineWidth=2;
+  ctx.fillStyle='rgba(99,102,241,.08)';
+  ctx.fillRect(tx(vx),ty(vy),tsz(vw),tsz(vh));
+  ctx.strokeRect(tx(vx),ty(vy),tsz(vw),tsz(vh));
 }
 
-// Click on minimap to navigate
-minimapContainer.addEventListener('click', (e) => {
-  const rect = minimapContainer.getBoundingClientRect();
-  const mx = e.clientX - rect.left;
-  const my = e.clientY - rect.top;
+// Minimap tap to navigate
+const minimapNav = e => {
+  const r = minimapContainer.getBoundingClientRect();
+  const mx = (e.touches?e.touches[0].clientX:e.clientX) - r.left;
+  const my = (e.touches?e.touches[0].clientY:e.clientY) - r.top;
 
-  // Calculate bounds (same as updateMinimap)
-  let minX = Infinity, minY = Infinity, maxX = -Infinity, maxY = -Infinity;
-  state.elements.forEach(el => {
-    if (el.type === 'note') {
-      minX = Math.min(minX, el.x); minY = Math.min(minY, el.y);
-      maxX = Math.max(maxX, el.x + el.w); maxY = Math.max(maxY, el.y + el.h);
-    } else if (el.type === 'path' && el.points) {
-      el.points.forEach(p => {
-        minX = Math.min(minX, p.x); minY = Math.min(minY, p.y);
-        maxX = Math.max(maxX, p.x); maxY = Math.max(maxY, p.y);
-      });
-    }
+  let minX=Infinity,minY=Infinity,maxX=-Infinity,maxY=-Infinity;
+  state.elements.forEach(el=>{
+    if(el.type==='note'){minX=Math.min(minX,el.x);minY=Math.min(minY,el.y);maxX=Math.max(maxX,el.x+el.w);maxY=Math.max(maxY,el.y+el.h)}
+    else if(el.type==='path'&&el.points)el.points.forEach(p=>{minX=Math.min(minX,p.x);minY=Math.min(minY,p.y);maxX=Math.max(maxX,p.x);maxY=Math.max(maxY,p.y)})
   });
-  if (!isFinite(minX)) { minX = -500; minY = -400; maxX = 500; maxY = 400; }
-  const padX = (maxX - minX) * 0.2 || 200;
-  const padY = (maxY - minY) * 0.2 || 200;
-  minX -= padX; minY -= padY; maxX += padX; maxY += padY;
-  const boundW = maxX - minX;
-  const boundH = maxY - minY;
-  const scale = Math.min(rect.width / boundW, rect.height / boundH);
-
-  const targetX = mx / scale + minX;
-  const targetY = my / scale + minY;
-
-  const containerRect = canvasContainer.getBoundingClientRect();
-  state.viewport.x = -(targetX * state.viewport.zoom - containerRect.width / 2);
-  state.viewport.y = -(targetY * state.viewport.zoom - containerRect.height / 2);
+  if(!isFinite(minX)){minX=-500;minY=-400;maxX=500;maxY=400}
+  const px=(maxX-minX)*.2||200;const py=(maxY-minY)*.2||200;
+  minX-=px;minY-=py;maxX+=px;maxY+=py;
+  const s=Math.min(r.width/(maxX-minX),r.height/(maxY-minY));
+  const tx=mx/s+minX, ty=my/s+minY;
+  const cr=canvasContainer.getBoundingClientRect();
+  state.viewport.x=-(tx*state.viewport.zoom-cr.width/2);
+  state.viewport.y=-(ty*state.viewport.zoom-cr.height/2);
   updateTransform();
-});
+};
+minimapContainer.addEventListener('click', minimapNav);
+minimapContainer.addEventListener('touchend', ev => { ev.preventDefault(); minimapNav(ev); });
 
-// Initial minimap render
-updateMinimap();
-
-// Repaint minimap periodically
-setInterval(updateMinimap, 2000);
-
-// Resize observer for minimap
-const minimapObserver = new ResizeObserver(() => updateMinimap());
-minimapObserver.observe(minimapContainer);
-
-// =================================================================
-//  INITIALIZATION
-// =================================================================
+// ====================================================================
+// INIT
+// ====================================================================
 function init() {
   updateTransform();
-  updateCursor();
 
-  // Add a welcome note
-  createNote(-100, -80, '#FFF9C4', '👋 欢迎使用协作白板！\n\n• 按 N 添加便签\n• 按 P 切换到画笔\n• 按 C 切换连线工具\n• 按 V 切换选择工具\n• 滚轮缩放画布\n• 拖拽空白区域平移', 240, 200);
+  const isMobile = window.innerWidth < 768;
+  createNote(-100, -80, '#FFF9C4',
+    isMobile
+      ? '👋 欢迎！\n\n轻点空白添加便签\n双指缩放画布\n长按便签弹出菜单\n双击便签编辑文本',
+    isMobile?180:240, isMobile?140:200);
 
-  // Add a second note
-  createNote(180, -50, '#BBDEFB', '💡 提示\n\n• 双击便签编辑文本\n• 右键便签查看更多操作\n• 拖拽右下角调整大小\n• 点击底部迷你地图快速定位', 220, 180);
+  createNote(isMobile?120:180, isMobile?-30:-50, '#BBDEFB',
+    isMobile
+      ? '💡 触屏操作\n\n单指拖动空白 = 平移\n单指拖动便签 = 移动\n双指捏合 = 缩放\n底部菜单 = 更多操作',
+    isMobile?180:220, isMobile?140:180);
 
-  // Add a third note
-  createNote(80, 180, '#C8E6C9', '🎯 试试看\n\n1. 添加几个便签\n2. 用连线工具连接它们\n3. 用画笔自由绘制\n4. 按 0 键重置视图', 200, 170);
+  createNote(isMobile?60:80, isMobile?140:180, '#C8E6C9',
+    '🎯 工具栏\n\n光标 = 选择移动\n📝 = 添加便签\n✏️ = 自由绘制\n🔗 = 连接便签',
+    isMobile?170:200, isMobile?140:170);
 }
 
 init();
+updateMinimap();
+setInterval(updateMinimap, 2000);
+new ResizeObserver(() => updateMinimap()).observe(minimapContainer);
+window.addEventListener('resize', () => updateMinimap());
 
-// =================================================================
-//  PREVENT DEFAULT CONTEXT MENU ON CANVAS
-// =================================================================
-canvasContainer.addEventListener('contextmenu', (e) => {
-  if (!e.target.closest('.sticky-note') && !e.target.closest('.connection-line')) {
+// ====================================================================
+// CONTEXT MENU on canvas (desktop right-click)
+// ====================================================================
+canvasContainer.addEventListener('contextmenu', e => {
+  if (!e.target.closest('.sticky-note') && !e.target.closest('.connection-line') && !e.target.closest('path')) {
+    e.preventDefault();
+  }
+  if (e.target.closest('.sticky-note')) {
+    const noteEl = e.target.closest('.sticky-note');
+    selectElementUI(noteEl.id);
+    showContextMenu();
+  }
+});
+
+// Right-click on note to show context
+document.addEventListener('contextmenu', e => {
+  if (e.target.closest('.sticky-note') && isTouchDevice) {
     e.preventDefault();
   }
 });
 
-// =================================================================
-//  RESPONSIVE: UPDATE MINIMAP ON WINDOW RESIZE
-// =================================================================
-window.addEventListener('resize', () => {
-  updateMinimap();
-});
 </script>
-
 </body>
 </html>
