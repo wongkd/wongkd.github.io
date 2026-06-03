@@ -84,6 +84,8 @@ body{
     linear-gradient(90deg,#e5e5e5 1px,transparent 1px);
   background-size:24px 24px;
   overflow:hidden;
+  touch-action:none;
+  -webkit-touch-callout:none;
 }
 .transform-layer{
   position:absolute;top:0;left:0;
@@ -485,22 +487,20 @@ canvasContainer.addEventListener('mouseleave', () => {
 });
 canvasContainer.addEventListener('wheel', onWheel, { passive: false });
 
-// Prevent default mobile behaviors
-document.addEventListener('touchmove', function(e) {
-  if (e.target.closest('.note-body') && e.target.closest('.note-body').isContentEditable) return;
-  if (e.target.closest('#canvasContainer') || e.target.closest('.toolbar')) {
-    e.preventDefault();
-  }
-}, { passive: false });
-
-document.addEventListener('gesturestart', e => e.preventDefault());
-document.addEventListener('gesturechange', e => e.preventDefault());
-document.addEventListener('gestureend', e => e.preventDefault());
+// Prevent iOS gesture and Android pull-to-refresh on the canvas
+canvasContainer.addEventListener('gesturestart', e => e.preventDefault());
+canvasContainer.addEventListener('gesturechange', e => e.preventDefault());
+canvasContainer.addEventListener('gestureend', e => e.preventDefault());
 
 function onPointerDown(e) {
   if (e.target.closest('.toolbar')) return;
   if (e.target.closest('.context-menu') || e.target.closest('.context-menu-backdrop')) return;
-  e.preventDefault();
+
+  // Only prevent default when we're going to handle the touch
+  // Don't prevent default on the note body (so contenteditable works)
+  if (!e.target.closest('.note-body')) {
+    e.preventDefault();
+  }
 
   const touches = e.touches;
 
@@ -520,15 +520,18 @@ function onPointerDown(e) {
     state.panMoved = false;
     state.panStartTime = Date.now();
 
-    // Check target
     const noteEl = e.target.closest('.sticky-note');
     const noteBody = e.target.closest('.note-body');
-    const noteHeader = e.target.closest('.note-header');
     const resizeHandle = e.target.closest('.note-resize-handle');
     const connLine = e.target.closest('.connection-line');
     const svgPath = e.target.closest('path[data-type="path"]');
+    const noteColorDot = e.target.closest('.note-color-dot');
+    const noteDeleteBtn = e.target.closest('.note-delete-btn');
 
-    // Resize handle — always in select mode
+    // Note sub-elements (color dots, delete button) — let them handle themselves
+    if (noteColorDot || noteDeleteBtn) return;
+
+    // Resize handle
     if (resizeHandle && state.currentTool === 'select') {
       clearLongPress();
       state.isResizing = true;
@@ -538,23 +541,21 @@ function onPointerDown(e) {
       return;
     }
 
-    // Note — select + prep long press + prep drag
+    // Note — select + prep long press
     if (noteEl && state.currentTool === 'select') {
       selectElementUI(noteEl.id);
-      // Start long press timer
       state.longPressTarget = noteEl;
       state.longPressPos = p;
       clearLongPress();
       state.longPressTimer = setTimeout(() => triggerLongPress(noteEl, p), 500);
-
-      // Pre-focus note body on touch
-      if (noteBody) {
-        setTimeout(() => { if (state.selectedElementId === noteEl.id) noteBody.focus(); }, 80);
+      // Focus note body on tap
+      if (noteBody && !isTouchDevice) {
+        setTimeout(() => { if (state.selectedElementId === noteEl.id) noteBody.focus(); }, 100);
       }
       return;
     }
 
-    // Path or connection — select
+    // Path / connection
     if (svgPath && state.currentTool === 'select' && !noteEl) { selectElementUI(svgPath.id); return; }
     if (connLine && state.currentTool === 'select' && !noteEl) { selectConnection(connLine); return; }
 
@@ -563,9 +564,6 @@ function onPointerDown(e) {
 
     // Connection mode
     if (state.currentTool === 'connection' && !noteEl) { clearLongPress(); startConnection(e); return; }
-
-    // Note mode — tap will create note (handled in pointerup)
-    if (state.currentTool === 'note') return;
   }
 }
 
@@ -893,24 +891,22 @@ function createNote(cx, cy, color, text, w, h) {
     deleteElement(id);
   });
   div.querySelector('.note-delete-btn').addEventListener('touchend', ev => {
-    ev.stopPropagation(); ev.preventDefault();
+    ev.stopPropagation();
     deleteElement(id);
   });
 
   div.querySelectorAll('.note-color-dot').forEach(dot => {
-    const handler = ev => { ev.stopPropagation(); ev.preventDefault(); changeNoteColor(id, dot.dataset.color); };
+    const handler = ev => { ev.stopPropagation(); changeNoteColor(id, dot.dataset.color); };
     dot.addEventListener('click', handler);
     dot.addEventListener('touchend', handler);
   });
 
-  // Prevent note-body from triggering canvas pan on touch
+  // Let canvas handle note-body interactions; just select on touch
   div.querySelector('.note-body').addEventListener('touchstart', ev => {
-    if (state.currentTool === 'select') {
-      selectElementUI(id);
-      clearLongPress();
-    }
-    ev.stopPropagation();
-  });
+    selectElementUI(id);
+    clearLongPress();
+    // Don't stop propagation — let canvas handle drag/pan logic
+  }, { passive: true });
 
   transformLayer.appendChild(div);
   state.elements.push({ id, type:'note', el:div, x:cx, y:cy, w:nw, h:nh, color:nc });
@@ -1243,7 +1239,7 @@ function hideContextMenu() {
 }
 
 contextMenuBackdrop.addEventListener('click', hideContextMenu);
-contextMenuBackdrop.addEventListener('touchend', ev => { ev.preventDefault(); hideContextMenu(); });
+contextMenuBackdrop.addEventListener('touchend', ev => { hideContextMenu(); });
 
 contextMenu.querySelectorAll('.context-menu-item').forEach(item => {
   const handler = () => {
@@ -1257,7 +1253,7 @@ contextMenu.querySelectorAll('.context-menu-item').forEach(item => {
     hideContextMenu();
   };
   item.addEventListener('click', handler);
-  item.addEventListener('touchend', ev => { ev.preventDefault(); handler(); });
+  item.addEventListener('touchend', ev => { handler(); });
 });
 
 // ====================================================================
@@ -1284,9 +1280,8 @@ function switchTool(tool) {
 }
 
 toolButtons.forEach(btn => {
-  const handler = () => switchTool(btn.dataset.tool);
-  btn.addEventListener('click', handler);
-  btn.addEventListener('touchend', ev => { ev.preventDefault(); handler(); });
+  btn.addEventListener('click', () => switchTool(btn.dataset.tool));
+  btn.addEventListener('touchend', ev => { ev.preventDefault(); switchTool(btn.dataset.tool); });
 });
 
 // Pen color
@@ -1450,7 +1445,7 @@ const minimapNav = e => {
   updateTransform();
 };
 minimapContainer.addEventListener('click', minimapNav);
-minimapContainer.addEventListener('touchend', ev => { ev.preventDefault(); minimapNav(ev); });
+minimapContainer.addEventListener('touchend', ev => { minimapNav(ev); });
 
 // ====================================================================
 // INIT
